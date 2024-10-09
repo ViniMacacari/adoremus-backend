@@ -27,15 +27,17 @@ class RotaBuscarSantoTerco {
                 this.carregarControladoresRecursivamente(caminhoCompleto, novaRotaBase)
             } else if (stats.isFile() && (arquivo.endsWith('.js') || arquivo.endsWith('.ts'))) {
                 const nomeArquivo = arquivo.replace(/\.(js|ts)$/, '')
-                const urlArquivo = `file://${caminhoCompleto.replace(/\\/g, '/')}`
-                import(urlArquivo)
+                const urlArquivoTS = `file://${caminhoCompleto.replace(/\\/g, '/')}`
+                const urlArquivoJS = `file://${caminhoCompleto.replace(/\\/g, '/').replace(/\.ts$/, '.js')}`
+
+                import(urlArquivoTS)
                     .then((controlador) => {
                         if (controlador.default && typeof controlador.default.informacoes === 'function') {
                             this.router.get(`${rotaBase}/${nomeArquivo}`, async (req, res) => {
                                 try {
                                     const dados = await controlador.default.informacoes()
                                     res.status(200).json(dados)
-                                } catch (err) {
+                                } catch (err: any) {
                                     res.status(500).json({ erro: err.message })
                                 }
                             })
@@ -43,8 +45,25 @@ class RotaBuscarSantoTerco {
                             console.error(`Controlador ${nomeArquivo} não possui a função informacoes`)
                         }
                     })
-                    .catch((err) => {
-                        console.error(`Erro ao importar o controlador ${nomeArquivo}:`, err)
+                    .catch(() => {
+                        import(urlArquivoJS)
+                            .then((controlador) => {
+                                if (controlador.default && typeof controlador.default.informacoes === 'function') {
+                                    this.router.get(`${rotaBase}/${nomeArquivo}`, async (req, res) => {
+                                        try {
+                                            const dados = await controlador.default.informacoes()
+                                            res.status(200).json(dados)
+                                        } catch (err: any) {
+                                            res.status(500).json({ erro: err.message })
+                                        }
+                                    })
+                                } else {
+                                    console.error(`Controlador ${nomeArquivo} não possui a função informacoes`)
+                                }
+                            })
+                            .catch((err) => {
+                                console.error(`Erro ao importar o controlador ${nomeArquivo} como JS:`, err)
+                            })
                     })
             }
         })
