@@ -5,8 +5,6 @@ class ServicoTercoMariano {
         try {
             BdPostgres.inicializar()
 
-            console.log('entro aqui tbm')
-
             const sql = 'SELECT * FROM view_terco'
 
             const resultado = await BdPostgres.executar(sql)
