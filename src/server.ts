@@ -1,5 +1,6 @@
 import express, { Application } from 'express'
 import dotenv from 'dotenv'
+import cors from 'cors'
 
 import RotaBuscarSantoTerco from './routes/santo-terco/buscar.js'
 
@@ -18,6 +19,7 @@ class Servidor {
 
     private middlewares(): void {
         this.app.use(express.json())
+        this.app.use(cors())
     }
 
     private rotas(): void {
