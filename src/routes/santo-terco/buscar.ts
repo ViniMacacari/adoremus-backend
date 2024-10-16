@@ -10,7 +10,7 @@ class RotaBuscarSantoTerco {
     }
 
     private registrarRotas(): void {
-        this.router.get('/buscar/santo-terco', (req, res) => TercoMariano.informacoes(req, res))
+        this.router.get('/buscar/terco-mariano', (req, res) => TercoMariano.informacoes(req, res))
     }
 }
 
