@@ -32,6 +32,7 @@ class ServicoSantos {
             }
 
             const resultado = await BdPostgres.executar(sql, parametros)
+
             return resultado
         } catch (err: any) {
             throw new Error(err)
