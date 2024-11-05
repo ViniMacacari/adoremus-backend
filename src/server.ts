@@ -34,7 +34,7 @@ class Servidor {
     }
 
     private rotas(): void {
-        this.app.use('/api/buscar', RotaBuscar)
+        this.app.use('/geral/buscar', RotaBuscar)
         this.app.use('/santo-terco', RotaBuscarSantoTerco)
         this.app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'Adoremus.html')) })
     }

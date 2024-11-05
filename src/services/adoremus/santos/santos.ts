@@ -12,18 +12,18 @@ class ServicoSantos {
             const parametros: any[] = []
 
             if (nome) {
-                sql += ` and nome = $${parametros.length + 1}`
-                parametros.push(nome)
+                sql += ` and nome like $${parametros.length + 1}`
+                parametros.push(`%${nome}%`)
             }
 
             if (conhecido_como) {
-                sql += ` and conhecido_como = $${parametros.length + 1}`
-                parametros.push(conhecido_como)
+                sql += ` and conhecido_como like $${parametros.length + 1}`
+                parametros.push(`%${conhecido_como}%`)
             }
 
             if (nacionalidade) {
-                sql += ` and nacionalidade = $${parametros.length + 1}`
-                parametros.push(nacionalidade)
+                sql += ` and nacionalidade like $${parametros.length + 1}`
+                parametros.push(`%${nacionalidade}%`)
             }
 
             if (martir !== undefined) {
