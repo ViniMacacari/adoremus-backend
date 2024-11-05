@@ -12,6 +12,8 @@ class ServicoOracoesTercoMisericordia {
             return resultado
         } catch (err: any) {
             throw new Error(err)
+        } finally {
+            await BdPostgres.desconectar()
         }
     }
 }

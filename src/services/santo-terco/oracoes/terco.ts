@@ -12,6 +12,8 @@ class ServicoOracoesTerco {
             return resultado
         } catch (err: any) {
             throw new Error(err)
+        } finally {
+            await BdPostgres.desconectar()
         }
     }
 }
