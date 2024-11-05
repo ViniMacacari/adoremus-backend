@@ -3,8 +3,6 @@ import BdPostgres from '../../../database/database.js'
 class ServicoTercoMariano {
     static async informacoes(): Promise<any> {
         try {
-            BdPostgres.inicializar()
-
             const sql = 'SELECT * FROM view_terco'
 
             const resultado = await BdPostgres.executar(sql)
@@ -12,8 +10,6 @@ class ServicoTercoMariano {
             return resultado
         } catch (err: any) {
             throw new Error(err)
-        } finally {
-            await BdPostgres.desconectar()
         }
     }
 }
