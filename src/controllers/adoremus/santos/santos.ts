@@ -4,18 +4,20 @@ import ServicoSantos from "../../../services/adoremus/santos/santos"
 class ControllerSantos {
     static async informacoes(req: Request, res: Response): Promise<any> {
         try {
-            const { nome, conhecido_como, nacionalidade, martir } = req.query as {
+            const { nome, conhecido_como, nacionalidade, martir, pagina } = req.query as {
                 nome?: string,
                 conhecido_como?: string,
                 nacionalidade?: string,
-                martir?: boolean
+                martir?: boolean,
+                pagina?: number
             }
 
             const resposta = await ServicoSantos.informacoes(
                 nome,
                 conhecido_como,
                 nacionalidade,
-                martir
+                martir,
+                pagina
             )
 
             return res.status(200).json(resposta)

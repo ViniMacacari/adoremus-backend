@@ -5,35 +5,56 @@ class ServicoSantos {
         nome?: string,
         conhecido_como?: string,
         nacionalidade?: string,
-        martir?: boolean
+        martir?: boolean,
+        pagina: number = 1
     ): Promise<any> {
         try {
-            let sql = `select * from view_santos where 1=1`
+            const itensPorPagina = 30
+
+            const paginaAtual = isNaN(Number(pagina)) ? 1 : Number(pagina)
+            const offset = (paginaAtual - 1) * itensPorPagina
+
+            let sqlBase = `select * from view_santos where 1=1`
             const parametros: any[] = []
 
             if (nome) {
-                sql += ` and nome like $${parametros.length + 1}`
+                sqlBase += ` and nome like $${parametros.length + 1}`
                 parametros.push(`%${nome}%`)
             }
 
             if (conhecido_como) {
-                sql += ` and conhecido_como like $${parametros.length + 1}`
+                sqlBase += ` and conhecido_como like $${parametros.length + 1}`
                 parametros.push(`%${conhecido_como}%`)
             }
 
             if (nacionalidade) {
-                sql += ` and nacionalidade like $${parametros.length + 1}`
+                sqlBase += ` and nacionalidade like $${parametros.length + 1}`
                 parametros.push(`%${nacionalidade}%`)
             }
 
             if (martir !== undefined) {
-                sql += ` and martir = $${parametros.length + 1}`
+                sqlBase += ` and martir = $${parametros.length + 1}`
                 parametros.push(martir)
             }
 
-            const resultado = await BdPostgres.executar(sql, parametros)
+            const sqlCount = `select count(*) from (${sqlBase}) as total`
+            const totalResultado = await BdPostgres.executar(sqlCount, parametros)
+            const total = parseInt(totalResultado[0].count, 10)
 
-            return resultado
+            const totalPaginas = Math.ceil(total / itensPorPagina)
+
+            const sqlPaginado = `${sqlBase} LIMIT $${parametros.length + 1} OFFSET $${parametros.length + 2}`
+            parametros.push(itensPorPagina, offset)
+
+            const resultado = await BdPostgres.executar(sqlPaginado, parametros)
+
+            return {
+                total,
+                totalPorPagina: resultado.length,
+                paginaAtual,
+                totalPaginas,
+                resultado
+            }
         } catch (err: any) {
             throw new Error(err)
         }
