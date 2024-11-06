@@ -4,6 +4,8 @@ import cors from 'cors'
 import path from 'path'
 import rateLimit from 'express-rate-limit'
 
+import ControllerConexao from './controllers/adoremus/abrir-conexao/abrir.js'
+
 import RotaBuscarSantoTerco from './routes/santo-terco/buscar.js'
 import RotaBuscar from './routes/api/buscar.js'
 
@@ -23,7 +25,10 @@ class Servidor {
     private middlewares(): void {
         const limiter = rateLimit({
             windowMs: 1 * 60 * 1000,
-            max: 10,
+            max: 30,
+            keyGenerator: (req: any) => {
+                return req.ip
+            },
             message: { error: 'Muitas requisições. Tente novamente mais tarde.' }
         })
 
@@ -34,9 +39,11 @@ class Servidor {
     }
 
     private rotas(): void {
+        this.app.get('/abrir-conexao', ControllerConexao.informacoes)
+        this.app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'Adoremus.html')) })
+
         this.app.use('/geral/buscar', RotaBuscar)
         this.app.use('/santo-terco', RotaBuscarSantoTerco)
-        this.app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'Adoremus.html')) })
     }
 
     public iniciar(): void {
