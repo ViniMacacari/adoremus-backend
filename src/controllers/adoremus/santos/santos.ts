@@ -22,8 +22,7 @@ class ControllerSantos {
 
             return res.status(200).json(resposta)
         } catch (err: any) {
-            res.status(500).json({ erro: err.message })
-            throw new Error(err)
+            return res.status(500).json({ erro: err.message })
         }
     }
 }
