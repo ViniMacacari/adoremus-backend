@@ -35,6 +35,7 @@ class Servidor {
         this.app.use(limiter)
         this.app.use(express.json())
         this.app.use(express.static(path.join(__dirname, 'public')))
+        this.app.use('/img', express.static(path.join(__dirname, 'public', 'img')))
         this.app.use(cors())
     }
 
