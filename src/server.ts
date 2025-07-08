@@ -4,32 +4,29 @@ import cors from 'cors'
 import path from 'path'
 import rateLimit from 'express-rate-limit'
 
-import ControllerConexao from './controllers/adoremus/abrir-conexao/abrir.js'
-
-import RotaBuscarSantoTerco from './routes/santo-terco/buscar.js'
-import RotaBuscar from './routes/api/buscar.js'
+import { RosaryRouter } from './router/rosary.js'
 
 dotenv.config()
 
-class Servidor {
+class Server {
     private app: Application
-    private porta: number
+    private port: number
+
+    private rosaryRouter: RosaryRouter = new RosaryRouter()
 
     constructor() {
         this.app = express()
-        this.porta = Number(process.env.PORTA_SERVIDOR)
-        this.middlewares()
-        this.rotas()
+        this.port = Number(process.env.SERVER_PORT)
+        this.setupMiddlewares()
+        this.setupRoutes()
     }
 
-    private middlewares(): void {
+    private setupMiddlewares(): void {
         const limiter = rateLimit({
             windowMs: 1 * 60 * 1000,
-            max: 30,
-            keyGenerator: (req: any) => {
-                return req.ip
-            },
-            message: { error: 'Muitas requisições. Tente novamente mais tarde.' }
+            max: 100,
+            keyGenerator: (req: any) => req.ip,
+            message: { error: 'Too many requests. Please try again later.' }
         })
 
         this.app.use(limiter)
@@ -39,19 +36,15 @@ class Servidor {
         this.app.use(cors())
     }
 
-    private rotas(): void {
-        this.app.get('/abrir-conexao', ControllerConexao.informacoes)
-        this.app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'Adoremus.html')) })
-
-        this.app.use('/geral/buscar', RotaBuscar)
-        this.app.use('/santo-terco', RotaBuscarSantoTerco)
+    private setupRoutes(): void {
+        this.app.use('/rosary', this.rosaryRouter.router)
     }
 
-    public iniciar(): void {
-        this.app.listen(this.porta, () => {
-            console.log(`Servidor iniciado na porta ${this.porta}`)
+    public start(): void {
+        this.app.listen(this.port, () => {
+            console.log(`Server started on port ${this.port}`)
         })
     }
 }
 
-new Servidor().iniciar()
+new Server().start()

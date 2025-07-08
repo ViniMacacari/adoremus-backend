@@ -3,8 +3,8 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-class BdPostgres {
-    private static pool: Pool = new Pool({
+export class PostgresDatabase {
+    private pool: Pool = new Pool({
         host: process.env.DB_HOST,
         port: Number(process.env.DB_PORT),
         user: process.env.DB_USER,
@@ -13,25 +13,23 @@ class BdPostgres {
         idleTimeoutMillis: 30000
     })
 
-    static inicializar(): void {
-        this.pool.on('error', (err) => {
+    init(): void {
+        this.pool.on('error', (err: any) => {
             console.error('Erro ao conectar ao banco de dados:', err)
         })
     }
 
-    static async executar(consulta: string, parametros: any[] = []): Promise<any> {
+    async exec(sql: string, params: any[] = []): Promise<any> {
         try {
-            const resultado = await this.pool.query(consulta, parametros)
+            const resultado = await this.pool.query(sql, params)
             return resultado.rows
         } catch (err: any) {
             console.error('Erro ao executar a consulta:', err)
-            throw new Error('Erro ao executar a consulta')
+            throw new Error(err)
         }
     }
 
-    static async desconectar(): Promise<void> {
+    async exit(): Promise<void> {
         await this.pool.end()
     }
 }
-
-export default BdPostgres
