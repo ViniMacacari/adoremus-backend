@@ -9,8 +9,8 @@ export class RosaryMysteriesService {
             const prayers = await this.db.exec('select * from view_oracoes_terco')
 
             return {
-                mysteries: mysteries,
-                prayers: prayers
+                misterios: mysteries,
+                oracoes: prayers
             }
         } catch (error: any) {
             throw new Error(`Erro ao obter os mistérios do rosário: ${error.message}`)
