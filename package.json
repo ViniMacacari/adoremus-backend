@@ -13,11 +13,13 @@
   "author": "Vinícius Macacari de Almeida",
   "license": "ISC",
   "dependencies": {
+    "@romcal/calendar.general-roman": "^3.0.0-dev.109",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.1",
     "https": "^1.0.0",
-    "pg": "^8.13.0"
+    "pg": "^8.13.0",
+    "romcal": "^3.0.0-dev.109"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
