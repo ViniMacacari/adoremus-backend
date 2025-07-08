@@ -37,7 +37,7 @@ class Server {
     }
 
     private setupRoutes(): void {
-        this.app.use('/rosary', this.rosaryRouter.router)
+        this.app.use('/rosario', this.rosaryRouter.router)
     }
 
     public start(): void {

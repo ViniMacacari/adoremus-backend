@@ -12,6 +12,6 @@ export class RosaryRouter {
     }
 
     private setupRoutes(): void {
-        this.router.get('/mysteries', this.rosaryMysteries.get.bind(this.rosaryMysteries))
+        this.router.get('/misterios', this.rosaryMysteries.get.bind(this.rosaryMysteries))
     }
 }
