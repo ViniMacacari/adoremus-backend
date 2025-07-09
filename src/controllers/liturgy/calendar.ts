@@ -19,6 +19,7 @@ export class LiturgicalCalendarController {
                 : await this.service.getYearLiturgicalDays(year)
             res.status(200).json({
                 paginas: 1,
+                totalPaginas: 1,
                 dados: result
             })
         } catch (error: any) {

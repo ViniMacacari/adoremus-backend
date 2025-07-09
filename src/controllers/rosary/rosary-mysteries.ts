@@ -9,6 +9,7 @@ export class RosaryMysteriesController {
             const result = await this.service.get()
             res.status(200).json({
                 paginas: 1,
+                totalPaginas: 1,
                 dados: result
             })
         } catch (error: any) {
