@@ -12,6 +12,7 @@ type Saint = {
 }
 
 type SaintsFilters = {
+    id?: number,
     nome?: string,
     nacionalidade?: string,
     martir?: boolean
@@ -23,6 +24,11 @@ export class SaintsService {
     async countSaints(filters?: SaintsFilters): Promise<number> {
         let query = 'select count(*) from view_santos where 1=1'
         const params: any[] = []
+
+        if (filters?.id) {
+            params.push(filters.id)
+            query += ` and id = $${params.length}`
+        }
 
         if (filters?.nome) {
             params.push(`%${filters.nome}%`)
@@ -51,6 +57,11 @@ export class SaintsService {
     async searchSaints(filters?: SaintsFilters, page = 1, limit = 20): Promise<Saint[]> {
         let query = 'select * from view_santos where 1=1'
         const params: any[] = []
+
+        if (filters?.id) {
+            params.push(filters.id)
+            query += ` and id = $${params.length}`
+        }
 
         if (filters?.nome) {
             params.push(`%${filters.nome}%`)
