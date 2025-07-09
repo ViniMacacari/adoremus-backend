@@ -5,6 +5,7 @@ import path from 'path'
 import rateLimit from 'express-rate-limit'
 
 import { RosaryRouter } from './router/rosary.js'
+import { LiturgyRouter } from './router/liturgy.js'
 
 dotenv.config()
 
@@ -13,6 +14,7 @@ class Server {
     private port: number
 
     private rosaryRouter: RosaryRouter = new RosaryRouter()
+    private liturgyRouter: LiturgyRouter = new LiturgyRouter()
 
     constructor() {
         this.app = express()
@@ -38,6 +40,7 @@ class Server {
 
     private setupRoutes(): void {
         this.app.use('/rosario', this.rosaryRouter.router)
+        this.app.use('/liturgia', this.liturgyRouter.router)
     }
 
     public start(): void {
