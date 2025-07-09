@@ -22,10 +22,12 @@ Mais informações e recursos serão adicionados conforme o desenvolvimento prog
 A API **não possui um limite de uso definido** nem impõe limites de uso diários ou mensais para o número de requisições, desde que as chamadas não sejam feitas de forma abusiva
 
 ## Status do Projeto
-
 Atualmente, o projeto está em **desenvolvimento** e novas funcionalidades serão integradas em breve.
 
 Se você deseja contribuir ou saber mais, fique à vontade para acompanhar as atualizações através do link da API.
+
+## Contribuição
+A melhor contribuição com esta API é você utilizá-la para evangelizar e levar a verdade de Cristo para as pessoas, use conforme for necessário!
 
 ## Objetivo
 Esta API é mantida com recursos próprios (sem fins lucrativos) e tem o objetivo de facilitar o acesso a informações da Igreja Católica para todos os desenvolvedores que precisarem de um conteúdo confiável e que vá de encontro com aquilo que é ensinado pela Igreja.
