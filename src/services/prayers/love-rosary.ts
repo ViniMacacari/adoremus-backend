@@ -5,13 +5,13 @@ export class LoveRosaryService {
 
     async get(): Promise<any> {
         try {
-            const mysteries = await this.db.exec('select * from view_oracoes_terco_amor')
+            const prayers = await this.db.exec('select * from view_oracoes_terco_amor')
 
             return {
-                misterios: mysteries
+                oracoes: prayers
             }
         } catch (error: any) {
-            throw new Error(`Erro ao obter os mistérios do rosário: ${error.message}`)
+            throw new Error(`Erro ao obter os mistérios do terço do amor: ${error.message}`)
         }
     }
 }
