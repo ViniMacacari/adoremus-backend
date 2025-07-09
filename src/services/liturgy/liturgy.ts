@@ -15,28 +15,25 @@ export class LiturgyService {
     }
 
     async getMonthLiturgicalDays(year: number, month: number): Promise<{ date: string, name: string, rank: string, season: string }[]> {
-        const calendar: Record<string, LiturgicalDay[]> = await this.romcal.generateCalendar(year)
-
+        const calendar = await this.romcal.generateCalendar(year)
         const monthString = String(month).padStart(2, '0')
 
-        const result = Object.entries(calendar)
-            .filter(([date]) => date.startsWith(`${year}-${monthString}`))
-            .map(([date, celebrations]) => {
-                const weekday = celebrations.find(c => c.definition.rankName === 'dia de semana' || c.definition.seasonNames[0])
-                if (!weekday) return null
+        const result: { date: string, name: string, rank: string, season: string }[] = []
 
-                const def = weekday.definition
-                const season = def.seasonNames[0]
-                if (!season) return null
+        for (const [date, celebrations] of Object.entries(calendar)) {
+            if (!date.startsWith(`${year}-${monthString}`)) continue
 
-                return {
+            const selected = celebrations.find(c => c.definition.seasonNames?.[0]) || celebrations[0]
+
+            if (selected) {
+                result.push({
                     date,
-                    name: def.name,
-                    rank: def.rankName,
-                    season
-                }
-            })
-            .filter((d): d is { date: string, name: string, rank: string, season: string } => d !== null)
+                    name: selected.definition.name,
+                    rank: selected.definition.rankName,
+                    season: selected.definition.seasonNames?.[0] ?? 'Tempo Comum'
+                })
+            }
+        }
 
         return result
     }
