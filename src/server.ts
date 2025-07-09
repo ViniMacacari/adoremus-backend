@@ -10,6 +10,8 @@ import { PrayersRouter } from './router/prayers.js'
 import { PeopleRouter } from './router/saints.js'
 import { DoutrineRouter } from './router/doutrine.js'
 
+import { LiturgyScheduler } from './cron/liturgy.js'
+
 dotenv.config()
 
 class Server {
@@ -21,6 +23,8 @@ class Server {
     private prayersRouter: PrayersRouter = new PrayersRouter()
     private peopleRouter: PeopleRouter = new PeopleRouter()
     private doutrineRouter: DoutrineRouter = new DoutrineRouter()
+
+    private liturgyScheduler: LiturgyScheduler = new LiturgyScheduler()
 
     constructor() {
         this.app = express()
@@ -56,6 +60,8 @@ class Server {
         this.app.listen(this.port, () => {
             console.log(`Server started on port ${this.port}`)
         })
+
+        this.liturgyScheduler.start()
     }
 }
 
