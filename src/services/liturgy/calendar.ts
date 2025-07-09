@@ -24,29 +24,24 @@ export class LiturgicalCalendarService {
     }
 
     async getYearLiturgicalDays(year: number): Promise<Record<string, LiturgicalDay[]>> {
-        const months = [
-            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-        ]
-
         const result: Record<string, LiturgicalDay[]> = {}
 
         for (let month = 1; month <= 12; month++) {
-            const days = await this.getMonthLiturgicalDays(year, month)
-            const monthName = months[month - 1]
-
-            if (monthName) {
-                result[monthName] = days
-            }
+            const monthData = await this.getMonthLiturgicalDays(year, month)
+            Object.assign(result, monthData)
         }
 
         return result
     }
 
-    async getMonthLiturgicalDays(year: number, month: number): Promise<LiturgicalDay[]> {
+    async getMonthLiturgicalDays(year: number, month: number): Promise<Record<string, LiturgicalDay[]>> {
+        const months = [
+            'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ]
+
         const calendar = await this.romcal.generateCalendar(year)
         const monthString = String(month).padStart(2, '0')
-
         const result: LiturgicalDay[] = []
 
         for (const [date, celebrations] of Object.entries(calendar)) {
@@ -70,6 +65,9 @@ export class LiturgicalCalendarService {
             }
         }
 
-        return result
+        const monthName = months[month - 1] as string
+        return {
+            [monthName]: result
+        }
     }
 }
