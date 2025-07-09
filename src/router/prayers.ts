@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { LoveRosaryController } from '../controllers/prayers/love-rosary.js'
+import { LoveRosaryController } from '../controllers/prayers/love-chaplet.js'
 
 export class PrayersRouter {
     public readonly router: Router
