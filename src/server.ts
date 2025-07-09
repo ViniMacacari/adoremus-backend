@@ -8,6 +8,7 @@ import { RosaryRouter } from './router/rosary.js'
 import { LiturgyRouter } from './router/liturgy.js'
 import { PrayersRouter } from './router/prayers.js'
 import { PeopleRouter } from './router/saints.js'
+import { DoutrineRouter } from './router/doutrine.js'
 
 dotenv.config()
 
@@ -19,6 +20,7 @@ class Server {
     private liturgyRouter: LiturgyRouter = new LiturgyRouter()
     private prayersRouter: PrayersRouter = new PrayersRouter()
     private peopleRouter: PeopleRouter = new PeopleRouter()
+    private doutrineRouter: DoutrineRouter = new DoutrineRouter()
 
     constructor() {
         this.app = express()
@@ -47,6 +49,7 @@ class Server {
         this.app.use('/liturgia', this.liturgyRouter.router)
         this.app.use('/oracoes', this.prayersRouter.router)
         this.app.use('/pessoas', this.peopleRouter.router)
+        this.app.use('/doutrina', this.doutrineRouter.router)
     }
 
     public start(): void {
