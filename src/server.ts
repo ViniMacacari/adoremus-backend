@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit'
 import { RosaryRouter } from './router/rosary.js'
 import { LiturgyRouter } from './router/liturgy.js'
 import { PrayersRouter } from './router/prayers.js'
+import { PeopleRouter } from './router/saints.js'
 
 dotenv.config()
 
@@ -17,6 +18,7 @@ class Server {
     private rosaryRouter: RosaryRouter = new RosaryRouter()
     private liturgyRouter: LiturgyRouter = new LiturgyRouter()
     private prayersRouter: PrayersRouter = new PrayersRouter()
+    private peopleRouter: PeopleRouter = new PeopleRouter()
 
     constructor() {
         this.app = express()
@@ -44,6 +46,7 @@ class Server {
         this.app.use('/rosario', this.rosaryRouter.router)
         this.app.use('/liturgia', this.liturgyRouter.router)
         this.app.use('/oracoes', this.prayersRouter.router)
+        this.app.use('/pessoas', this.peopleRouter.router)
     }
 
     public start(): void {
