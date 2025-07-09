@@ -1,8 +1,8 @@
 import { Request, Response } from "express"
-import { LoveRosaryService } from "../../services/prayers/love-chaplet"
+import { LoveChapletService } from "../../services/prayers/love-chaplet"
 
-export class LoveRosaryController {
-    private service: LoveRosaryService = new LoveRosaryService()
+export class LoveChapletController {
+    private service: LoveChapletService = new LoveChapletService()
 
     async get(_req: Request, res: Response): Promise<void> {
         try {

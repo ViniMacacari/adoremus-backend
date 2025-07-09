@@ -1,6 +1,6 @@
 import { PostgresDatabase } from "../../database/postgresql.js"
 
-export class LoveRosaryService {
+export class LoveChapletService {
     private db: PostgresDatabase = new PostgresDatabase()
 
     async get(): Promise<any> {

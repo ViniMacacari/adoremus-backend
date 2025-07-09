@@ -1,10 +1,10 @@
 import { Router } from 'express'
-import { LoveRosaryController } from '../controllers/prayers/love-chaplet.js'
+import { LoveChapletController } from '../controllers/prayers/love-chaplet.js'
 
 export class PrayersRouter {
     public readonly router: Router
 
-    private loveRosary: LoveRosaryController = new LoveRosaryController()
+    private loveChaplet: LoveChapletController = new LoveChapletController()
 
     constructor() {
         this.router = Router()
@@ -12,6 +12,6 @@ export class PrayersRouter {
     }
 
     private setupRoutes(): void {
-        this.router.get('/terco-amor', this.loveRosary.get.bind(this.loveRosary))
+        this.router.get('/terco-amor', this.loveChaplet.get.bind(this.loveChaplet))
     }
 }
