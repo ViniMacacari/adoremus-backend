@@ -8,7 +8,7 @@ type Reading = {
     content: string
 }
 
-type LiturgicalContent = {
+export type LiturgicalContent = {
     date: string
     celebration: string
     firstReading: Reading
