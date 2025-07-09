@@ -1,4 +1,4 @@
-import { Romcal, LiturgicalDay } from 'romcal'
+import { Romcal } from 'romcal'
 import { GeneralRoman_PtBr } from '@romcal/calendar.general-roman'
 
 export class LiturgyService {
@@ -14,11 +14,23 @@ export class LiturgyService {
         })
     }
 
-    async getMonthLiturgicalDays(year: number, month: number): Promise<{ date: string, name: string, rank: string, season: string }[]> {
+    async getMonthLiturgicalDays(year: number, month: number): Promise<{
+        date: string
+        name: string
+        rank: string
+        season: string
+        holyDay: boolean
+    }[]> {
         const calendar = await this.romcal.generateCalendar(year)
         const monthString = String(month).padStart(2, '0')
 
-        const result: { date: string, name: string, rank: string, season: string }[] = []
+        const result: {
+            date: string
+            name: string
+            rank: string
+            season: string
+            holyDay: boolean
+        }[] = []
 
         for (const [date, celebrations] of Object.entries(calendar)) {
             if (!date.startsWith(`${year}-${monthString}`)) continue
@@ -30,7 +42,8 @@ export class LiturgyService {
                     date,
                     name: selected.definition.name,
                     rank: selected.definition.rankName,
-                    season: selected.definition.seasonNames?.[0] ?? 'Tempo Comum'
+                    season: selected.definition.seasonNames?.[0] ?? 'Tempo Comum',
+                    holyDay: selected.isHolyDayOfObligation ?? false
                 })
             }
         }
