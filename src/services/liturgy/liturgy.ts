@@ -20,6 +20,7 @@ export class LiturgyService {
         rank: string
         season: string
         holyDay: boolean
+        weekDay: string
     }[]> {
         const calendar = await this.romcal.generateCalendar(year)
         const monthString = String(month).padStart(2, '0')
@@ -30,6 +31,7 @@ export class LiturgyService {
             rank: string
             season: string
             holyDay: boolean
+            weekDay: string
         }[] = []
 
         for (const [date, celebrations] of Object.entries(calendar)) {
@@ -38,12 +40,17 @@ export class LiturgyService {
             const selected = celebrations.find(c => c.definition.seasonNames?.[0]) || celebrations[0]
 
             if (selected) {
+                const weekDay = new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR', {
+                    weekday: 'long'
+                })
+
                 result.push({
                     date,
                     name: selected.definition.name,
                     rank: selected.definition.rankName,
                     season: selected.definition.seasonNames?.[0] ?? 'Tempo Comum',
-                    holyDay: selected.isHolyDayOfObligation ?? false
+                    holyDay: selected.isHolyDayOfObligation ?? false,
+                    weekDay
                 })
             }
         }
