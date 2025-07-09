@@ -17,7 +17,10 @@ export class LiturgicalCalendarController {
             const result = month
                 ? await this.service.getMonthLiturgicalDays(year, month)
                 : await this.service.getYearLiturgicalDays(year)
-            res.status(200).json(result)
+            res.status(200).json({
+                paginas: 1,
+                dados: result
+            })
         } catch (error: any) {
             console.error(`Error fetching liturgical days: ${error.message}`)
             res.status(500).json({ error: 'Failed to fetch liturgical days' })
