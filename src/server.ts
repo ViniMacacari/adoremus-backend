@@ -59,6 +59,7 @@ class Server {
     public start(): void {
         this.app.listen(this.port, () => {
             console.log(`Server started on port ${this.port}`)
+            this.liturgyScheduler.runNow()
         })
 
         this.liturgyScheduler.start()
