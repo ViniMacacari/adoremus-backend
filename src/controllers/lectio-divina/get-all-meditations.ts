@@ -13,8 +13,8 @@ export class LectioDivinaAllController {
                 dados: result
             })
         } catch (error: any) {
-            console.error(`Error fetching liturgy gospel: ${error.message}`)
-            res.status(500).json({ error: 'Failed to fetch liturgy gospel' })
+            console.error(`Error fetching meditation: ${error.message}`)
+            res.status(500).json({ error: 'Failed to fetch meditation' })
         }
     }
 }
