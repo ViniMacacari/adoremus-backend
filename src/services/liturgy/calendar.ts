@@ -44,12 +44,19 @@ export class LiturgicalCalendarService {
         const monthString = String(month).padStart(2, '0')
         const result: LiturgicalDay[] = []
 
+        let lastValidLiturgicalTime = 'Tempo Comum'
+
         for (const [date, celebrations] of Object.entries(calendar)) {
             if (!date.startsWith(`${year}-${monthString}`)) continue
 
             const selected = celebrations.find(c => c.definition.seasonNames?.[0]) || celebrations[0]
 
             if (selected) {
+                const actual = selected.definition.seasonNames?.[0] ?? lastValidLiturgicalTime
+                if (selected.definition.seasonNames?.[0]) {
+                    lastValidLiturgicalTime = selected.definition.seasonNames[0]
+                }
+
                 const weekDay = new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR', {
                     weekday: 'long'
                 })
@@ -58,7 +65,7 @@ export class LiturgicalCalendarService {
                     data: date,
                     descricao: selected.definition.name,
                     tipo: selected.definition.rankName,
-                    tempo: selected.definition.seasonNames?.[0] ?? 'Tempo Comum',
+                    tempo: actual,
                     preceito: selected.isHolyDayOfObligation ?? false,
                     dia_semana: weekDay
                 })
