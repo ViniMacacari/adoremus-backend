@@ -1,10 +1,11 @@
-import { Pool } from 'pg'
+import pg from 'pg'
+import type { Pool as PoolType } from 'pg'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
 export class PostgresDatabase {
-    private pool: Pool = new Pool({
+    private pool: PoolType = new pg.Pool({
         host: process.env.DB_HOST,
         port: Number(process.env.DB_PORT),
         user: process.env.DB_USER,
