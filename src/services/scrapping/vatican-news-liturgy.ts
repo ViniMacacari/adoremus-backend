@@ -1,6 +1,6 @@
 import axios from 'axios'
 import * as cheerio from 'cheerio'
-import { bookAbbreviations } from '../../database/book-abreviations'
+import { bookAbbreviations } from '../../database/book-abreviations.js'
 
 type Reading = {
     title: string

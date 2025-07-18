@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { LiturgicalCalendarController } from '../controllers/liturgy/calendar'
-import { GospelLiturgyController } from '../controllers/liturgy/gospel'
+import { LiturgicalCalendarController } from '../controllers/liturgy/calendar.js'
+import { GospelLiturgyController } from '../controllers/liturgy/gospel.js'
 
 export class LiturgyRouter {
     public readonly router: Router

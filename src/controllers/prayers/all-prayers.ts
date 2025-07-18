@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { AllPrayersService } from "../../services/prayers/all-prayers"
+import { AllPrayersService } from "../../services/prayers/all-prayers.js"
 
 export class AllPrayersController {
     private service: AllPrayersService = new AllPrayersService()

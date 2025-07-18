@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { CommandmentsService } from "../../services/doutrine/commandments"
+import { CommandmentsService } from "../../services/doutrine/commandments.js"
 
 export class CommandmentsController {
     private service: CommandmentsService = new CommandmentsService()

@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { LiturgicalCalendarService } from "../../services/liturgy/calendar"
+import { LiturgicalCalendarService } from "../../services/liturgy/calendar.js"
 
 export class LiturgicalCalendarController {
     private service: LiturgicalCalendarService = new LiturgicalCalendarService()

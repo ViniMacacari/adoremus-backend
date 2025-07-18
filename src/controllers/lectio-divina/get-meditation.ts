@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { LectioDivinaService } from "../../services/lectio-divina/get-meditation"
+import { LectioDivinaService } from "../../services/lectio-divina/get-meditation.js"
 
 export class LectioDivinaController {
     private service: LectioDivinaService = new LectioDivinaService()

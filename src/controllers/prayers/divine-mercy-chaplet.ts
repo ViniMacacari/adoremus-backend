@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { DivineMercyChapletService } from "../../services/prayers/divine-mercy-chaplet"
+import { DivineMercyChapletService } from "../../services/prayers/divine-mercy-chaplet.js"
 
 export class DivineMercyChapletController {
     private service: DivineMercyChapletService = new DivineMercyChapletService()
