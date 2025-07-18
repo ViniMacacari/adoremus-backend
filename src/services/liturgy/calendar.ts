@@ -77,4 +77,20 @@ export class LiturgicalCalendarService {
             [monthName]: result
         }
     }
+
+    async getTodayLiturgicalDay(): Promise<LiturgicalDay | null> {
+        const today = new Date()
+        const year = today.getFullYear()
+        const month = today.getMonth() + 1
+        const dayStr = String(today.getDate()).padStart(2, '0')
+        const todayStr = `${year}-${String(month).padStart(2, '0')}-${dayStr}`
+
+        const monthData = await this.getMonthLiturgicalDays(year, month)
+        const [monthName] = Object.keys(monthData)
+
+        if (!monthName) return null
+
+        const day = monthData[monthName]?.find(d => d.data === todayStr)
+        return day ?? null
+    }
 }

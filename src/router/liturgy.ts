@@ -14,6 +14,7 @@ export class LiturgyRouter {
     }
 
     private setupRoutes(): void {
+        this.router.get('/calendario/hoje', this.liturgicalCalendar.getToday.bind(this.liturgicalCalendar))
         this.router.get('/calendario/:year/:month?', this.liturgicalCalendar.get.bind(this.liturgicalCalendar))
         this.router.get('/evangelho', this.gospelLiturgy.get.bind(this.gospelLiturgy))
     }
