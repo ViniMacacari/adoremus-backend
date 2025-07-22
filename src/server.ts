@@ -40,6 +40,8 @@ class Server {
     }
 
     private setupMiddlewares(): void {
+        this.app.use(cors())
+
         const limiter = rateLimit({
             windowMs: 1 * 60 * 1000,
             max: 100,
@@ -51,7 +53,6 @@ class Server {
         this.app.use(express.json())
         this.app.use(express.static(path.join(__dirname, 'public')))
         this.app.use('/img', express.static(path.join(__dirname, 'public', 'img')))
-        this.app.use(cors())
     }
 
     private setupRoutes(): void {
