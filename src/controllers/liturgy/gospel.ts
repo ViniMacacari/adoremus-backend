@@ -4,9 +4,10 @@ import { GospelLiturgyService } from "../../services/liturgy/gospel.js"
 export class GospelLiturgyController {
     private service: GospelLiturgyService = new GospelLiturgyService()
 
-    async get(_req: Request, res: Response): Promise<void> {
+    async get(req: Request, res: Response): Promise<void> {
         try {
-            const result = await this.service.getToday()
+            const { locale } = req.query
+            const result = await this.service.getToday(locale as string | undefined)
             res.status(200).json({
                 paginas: 1,
                 totalPaginas: 1,
