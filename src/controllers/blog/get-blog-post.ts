@@ -7,7 +7,7 @@ export class BlogController {
     async getPosts(req: Request, res: Response): Promise<void> {
         try {
             const page = Number(req.query.page) || 1
-            const limit = 10
+            const limit = 5
 
             const filters = {
                 id: req.query.id ? Number(req.query.id) : undefined,
