@@ -16,6 +16,6 @@ export class BlogRouter {
     private setupRoutes(): void {
         this.router.get('/categorias', this.categories.get.bind(this.categories))
         this.router.get('/postagens', this.blog.getPosts.bind(this.blog))
-        this.router.get('/postagens/:id', this.blog.getPostById.bind(this.blog))
+        this.router.get('/postagens/:slug', this.blog.getPostBySlug.bind(this.blog))
     }
 }

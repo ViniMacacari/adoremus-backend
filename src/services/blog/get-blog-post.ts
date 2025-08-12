@@ -112,13 +112,13 @@ export class GetBlogPost {
         }
     }
 
-    async getById(id: number): Promise<any> {
-        const query = 'select * from postagens where id = $1'
+    async getBySlug(slug: string): Promise<any> {
+        const query = 'select * from postagens where slug = $1'
         try {
-            const result = await this.db.exec(query, [id])
+            const result = await this.db.exec(query, [slug])
             return result[0] || null
         } catch (error: any) {
-            throw new Error(`Erro ao obter a postagem por ID: ${error.message}`)
+            throw new Error(`Erro ao obter a postagem por slug: ${error.message}`)
         }
     }
 }

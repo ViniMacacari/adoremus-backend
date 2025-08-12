@@ -33,16 +33,16 @@ export class BlogController {
         }
     }
 
-    async getPostById(req: Request, res: Response): Promise<void> {
+    async getPostBySlug(req: Request, res: Response): Promise<void> {
         try {
-            const idFilter = Number(req.params.id)
+            const slugFilter = req.params.slug
 
-            if (isNaN(idFilter) || idFilter <= 0) {
-                res.status(400).json({ error: "ID inválido" })
+            if (!slugFilter) {
+                res.status(400).json({ error: "Slug não fornecido" })
                 return
             }
 
-            const dados = await this.service.getById(idFilter)
+            const dados = await this.service.getBySlug(slugFilter)
 
             if (!dados) {
                 res.status(404).json({ error: "Postagem não encontrada" })
