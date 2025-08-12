@@ -12,6 +12,7 @@ import { PeopleRouter } from './router/saints.js'
 import { DoutrineRouter } from './router/doutrine.js'
 import { LectioDivinaRouter } from './router/lectio-divina.js'
 import { MissalRouter } from './router/missal.js'
+import { BlogRouter } from './router/blog.js'
 
 import { LiturgyScheduler } from './cron/liturgy.js'
 
@@ -31,6 +32,7 @@ class Server {
     private doutrineRouter: DoutrineRouter = new DoutrineRouter()
     private lectioDivinaRouter: LectioDivinaRouter = new LectioDivinaRouter()
     private missalRouter: MissalRouter = new MissalRouter()
+    private blogRouter: BlogRouter = new BlogRouter()
 
     private liturgyScheduler: LiturgyScheduler = new LiturgyScheduler()
 
@@ -65,6 +67,7 @@ class Server {
         this.app.use('/doutrina', this.doutrineRouter.router)
         this.app.use('/lectio-divina', this.lectioDivinaRouter.router)
         this.app.use('/missal', this.missalRouter.router)
+        this.app.use('/blog', this.blogRouter.router)
     }
 
     public start(): void {
