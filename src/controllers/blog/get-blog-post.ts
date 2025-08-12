@@ -32,4 +32,31 @@ export class BlogController {
             res.status(500).json({ error: "Erro ao buscar postagens" })
         }
     }
+
+    async getPostById(req: Request, res: Response): Promise<void> {
+        try {
+            const idFilter = Number(req.params.id)
+
+            if (isNaN(idFilter) || idFilter <= 0) {
+                res.status(400).json({ error: "ID inválido" })
+                return
+            }
+
+            const dados = await this.service.getById(idFilter)
+
+            if (!dados) {
+                res.status(404).json({ error: "Postagem não encontrada" })
+                return
+            }
+
+            res.status(200).json({
+                pagina: 1,
+                totalPaginas: 1,
+                dados
+            })
+        } catch (error: any) {
+            console.error("Erro ao buscar postagens:", error.message)
+            res.status(500).json({ error: "Erro ao buscar postagens" })
+        }
+    }
 }

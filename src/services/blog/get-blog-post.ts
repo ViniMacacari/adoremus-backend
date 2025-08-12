@@ -14,7 +14,7 @@ export class GetBlogPost {
     private db: PostgresDatabase = new PostgresDatabase()
 
     async get(filters?: BlogPostFilters, page = 1, limit = 10): Promise<any[]> {
-        let query = 'select * from postagens where 1=1'
+        let query = 'select id, titulo, subtitulo, resumo, autor, data_postagem, categoria, slug from postagens where 1=1'
         const params: any[] = []
 
         if (filters?.id) {
@@ -109,6 +109,16 @@ export class GetBlogPost {
             return Number(result[0].count || 0)
         } catch (error: any) {
             throw new Error(`Erro ao contar as postagens: ${error.message}`)
+        }
+    }
+
+    async getById(id: number): Promise<any> {
+        const query = 'select * from postagens where id = $1'
+        try {
+            const result = await this.db.exec(query, [id])
+            return result[0] || null
+        } catch (error: any) {
+            throw new Error(`Erro ao obter a postagem por ID: ${error.message}`)
         }
     }
 }
