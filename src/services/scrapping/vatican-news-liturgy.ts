@@ -49,6 +49,15 @@ export class VaticanNewsScrappingService {
             return section.find('p').toArray().map(p => $(p).text().replace(/<br\s*\/?>/gi, '').replace(/&nbsp;/g, '').trim()).filter(Boolean)
         }
 
+        const normalizeText = (text: string): string => {
+            return text
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+        }
+
         const parseReading = (paragraphs: string[] | any): Reading => {
             if (!paragraphs || paragraphs.length === 0)
                 return { title: '', reference: '', content: '' }
@@ -69,8 +78,11 @@ export class VaticanNewsScrappingService {
 
             for (let i = 0; i < paragraphs.length; i++) {
                 const line: any = paragraphs[i].trim()
+                const lineNorm = normalizeText(line)
+
                 for (const book of Object.keys(bookAbbreviations)) {
-                    if (line.toLowerCase().includes(book.toLowerCase())) {
+                    const bookNorm = normalizeText(book)
+                    if (lineNorm.includes(bookNorm)) {
                         title = line
                         paragraphs.splice(i, 1)
                         break
