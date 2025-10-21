@@ -17,6 +17,21 @@ interface ResultadoLiturgia {
     texto: string
 }
 
+interface ParteHora {
+    html: string
+    texto: string
+}
+
+interface ResultadoHoraMedia {
+    titulo: string
+    hora: string
+    partes: {
+        tercia: ParteHora
+        sexta: ParteHora
+        noa: ParteHora
+    }
+}
+
 export class IBreviaryService {
     private readonly base = 'https://www.ibreviary.com/m2'
     private readonly idioma: string
@@ -40,8 +55,6 @@ export class IBreviaryService {
 
     private async definirDiaAtual(): Promise<void> {
         const { ano, mes, dia } = this.getDataBrasil()
-
-        // define a data e o idioma (pt)
         const body = new URLSearchParams({
             anno: ano.toString(),
             mese: mes.toString(),
@@ -49,13 +62,9 @@ export class IBreviaryService {
             lang: this.idioma,
             ok: 'ok'
         })
-
-        // essa requisição cria o cookie de sessão
         await this.cliente.post(`${this.base}/opzioni.php`, body, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         })
-
-        // esta requisição “ativa” o idioma e data definidos
         await this.cliente.get(`${this.base}/breviario.php`)
     }
 
@@ -80,7 +89,6 @@ export class IBreviaryService {
 
     async obterHora(hora: Hora): Promise<ResultadoLiturgia> {
         await this.definirDiaAtual()
-
         const url = `${this.base}/breviario.php?s=${hora}`
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
@@ -105,5 +113,44 @@ export class IBreviaryService {
             resultado[hora] = await this.obterHora(hora)
         }
         return resultado
+    }
+
+    async obterHoraMediaSeparada(): Promise<ResultadoHoraMedia> {
+        await this.definirDiaAtual()
+        const url = `${this.base}/breviario.php?s=ora_media`
+        const { data } = await this.cliente.get(url)
+        const $ = cheerio.load(data)
+        const conteudo = $('#contenuto .inner')
+        const titulo = conteudo.find('h1').first().text().trim()
+        const htmlCompleto = conteudo.html() || ''
+        const textoCompleto = this.limparHtml(htmlCompleto)
+
+        // localizar os pontos de divisão
+        const idxTercia = textoCompleto.search(/Tércia/i)
+        const idxSexta = textoCompleto.search(/Sexta/i)
+        const idxNoa = textoCompleto.search(/Noa/i)
+
+        const trechoTercia = textoCompleto.slice(idxTercia, idxSexta).trim()
+        const trechoSexta = textoCompleto.slice(idxSexta, idxNoa).trim()
+        const trechoNoa = textoCompleto.slice(idxNoa).trim()
+
+        return {
+            titulo,
+            hora: 'Hora Intermédia',
+            partes: {
+                tercia: {
+                    html: htmlCompleto,
+                    texto: this.identarTexto(trechoTercia)
+                },
+                sexta: {
+                    html: htmlCompleto,
+                    texto: this.identarTexto(trechoSexta)
+                },
+                noa: {
+                    html: htmlCompleto,
+                    texto: this.identarTexto(trechoNoa)
+                }
+            }
+        }
     }
 }
