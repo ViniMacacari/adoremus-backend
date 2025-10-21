@@ -4,25 +4,25 @@ import he from 'he'
 import { CookieJar } from 'tough-cookie'
 import { wrapper } from 'axios-cookiejar-support'
 
-type Hora =
+export type Hora =
     | 'ufficio_delle_letture'
     | 'lodi'
     | 'ora_media'
     | 'vespri'
     | 'compieta'
 
-interface ResultadoLiturgia {
+export interface ResultadoLiturgia {
     titulo: string
     html: string
     texto: string
 }
 
-interface ParteHora {
+export interface ParteHora {
     html: string
     texto: string
 }
 
-interface ResultadoHoraMedia {
+export interface ResultadoHoraMedia {
     titulo: string
     hora: string
     partes: {
@@ -70,13 +70,21 @@ export class IBreviaryService {
 
     private limparHtml(html: string): string {
         const $ = cheerio.load(html)
-        $('script, style, noscript').remove()
-        const texto = he
+        $('script, style, noscript, a[href*="ibreviary.com"], a[href*="donazione"], a[href*="newsletter"]').remove()
+        $('p').each((_, el) => {
+            const texto = $(el).text().trim()
+            if (/DONA|ISCRIVITI|Menu|sostenere lo sviluppo/i.test(texto)) $(el).remove()
+        })
+
+        let texto = he
             .decode($.text())
             .replace(/\r?\n|\r/g, '\n')
             .replace(/\n\s*\n+/g, '\n\n')
             .replace(/\s{2,}/g, ' ')
             .trim()
+
+        texto = texto.replace(/\bAmen\b/gi, 'Amém')
+
         return texto
     }
 
