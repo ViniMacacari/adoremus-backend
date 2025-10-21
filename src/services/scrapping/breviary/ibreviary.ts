@@ -53,7 +53,6 @@ export class IBreviaryService {
         }
     }
 
-    // agora aceita data opcional
     private async definirDiaAtual(
         ano?: number,
         mes?: number,
@@ -71,37 +70,41 @@ export class IBreviaryService {
             lang: this.idioma,
             ok: 'ok'
         })
+
         await this.cliente.post(`${this.base}/opzioni.php`, body, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         })
         await this.cliente.get(`${this.base}/breviario.php`)
     }
 
-    private limparHtml(html: string): string {
+    // HTML puro, apenas limpo (sem alterar estrutura)
+    private limparHtml(html: string): { html: string; texto: string } {
         const $ = cheerio.load(html)
-        $('script, style, noscript, a[href*="ibreviary.com"], a[href*="donazione"], a[href*="newsletter"]').remove()
-        $('p').each((_, el) => {
-            const texto = $(el).text().trim()
-            if (/DONA|ISCRIVITI|Menu|sostenere lo sviluppo/i.test(texto)) $(el).remove()
+
+        // Remove scripts, estilos e blocos desnecessários
+        $('script, style, noscript, header, footer, nav').remove()
+        $('a[href*="donazione"], a[href*="newsletter"], a[href*="ibreviary.com"]').remove()
+
+        // Remove cabeçalhos redundantes (Breviário, Laudes etc.)
+        $('h1, h2, h3').each((_, el) => {
+            const t = $(el).text().trim()
+            if (/breviário|breviario|laudes|ofício|compieta|vesperas|tércia|sexta|noa/i.test(t))
+                $(el).remove()
         })
 
-        let texto = he
-            .decode($.text())
-            .replace(/\r?\n|\r/g, '\n')
-            .replace(/\n\s*\n+/g, '\n\n')
-            .replace(/\s{2,}/g, ' ')
-            .trim()
+        // Remove spans/font inúteis, preservando o texto e estrutura
+        $('span, font').each((_, el) => {
+            const node = $(el)
+            node.replaceWith(node.html() || node.text())
+        })
 
-        texto = texto.replace(/\bAmen\b/gi, 'Amém')
+        // Decodifica entidades HTML, mantendo estrutura
+        const cleanHtml = he.decode($.html().trim())
 
-        return texto
-    }
+        // Cria versão texto simples (para salvar no banco, se precisar)
+        const cleanText = he.decode($.text().trim())
 
-    private identarTexto(texto: string): string {
-        return texto
-            .split('\n')
-            .map(l => '  ' + l.trim())
-            .join('\n')
+        return { html: cleanHtml, texto: cleanText }
     }
 
     async obterHora(hora: Hora, ano?: number, mes?: number, dia?: number): Promise<ResultadoLiturgia> {
@@ -110,14 +113,36 @@ export class IBreviaryService {
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
         const conteudo = $('#contenuto .inner')
-        conteudo.find('h1').each((_, el) => {
-            const texto = $(el).html() || ''
-            $(el).replaceWith(`<h3>${texto}</h3>`)
-        })
-        const titulo = conteudo.find('h3').first().text().trim()
-        const html = conteudo.html() || ''
-        const texto = this.identarTexto(this.limparHtml(html))
-        return { titulo, html, texto }
+        const { html: htmlLimpo, texto: textoLimpo } = this.limparHtml(conteudo.html() || '')
+        const titulo = conteudo.find('h3').first().text().trim() || hora
+        return { titulo, html: htmlLimpo, texto: textoLimpo }
+    }
+
+    async obterHoraMediaSeparada(ano?: number, mes?: number, dia?: number): Promise<ResultadoHoraMedia> {
+        await this.definirDiaAtual(ano, mes, dia)
+        const url = `${this.base}/breviario.php?s=ora_media`
+        const { data } = await this.cliente.get(url)
+        const $ = cheerio.load(data)
+        const conteudo = $('#contenuto .inner')
+        const { html: htmlLimpo, texto: textoCompleto } = this.limparHtml(conteudo.html() || '')
+
+        const idxTercia = textoCompleto.search(/Tércia/i)
+        const idxSexta = textoCompleto.search(/Sexta/i)
+        const idxNoa = textoCompleto.search(/Noa/i)
+
+        const trechoTercia = textoCompleto.slice(idxTercia, idxSexta).trim()
+        const trechoSexta = textoCompleto.slice(idxSexta, idxNoa).trim()
+        const trechoNoa = textoCompleto.slice(idxNoa).trim()
+
+        return {
+            titulo: 'Hora Média',
+            hora: 'Hora Intermédia',
+            partes: {
+                tercia: { html: htmlLimpo, texto: trechoTercia },
+                sexta: { html: htmlLimpo, texto: trechoSexta },
+                noa: { html: htmlLimpo, texto: trechoNoa }
+            }
+        }
     }
 
     async obterTodasAsHoras(ano?: number, mes?: number, dia?: number): Promise<Record<Hora, ResultadoLiturgia>> {
@@ -134,47 +159,5 @@ export class IBreviaryService {
             resultado[hora] = await this.obterHora(hora, ano, mes, dia)
         }
         return resultado
-    }
-
-    async obterHoraMediaSeparada(ano?: number, mes?: number, dia?: number): Promise<ResultadoHoraMedia> {
-        await this.definirDiaAtual(ano, mes, dia)
-        const url = `${this.base}/breviario.php?s=ora_media`
-        const { data } = await this.cliente.get(url)
-        const $ = cheerio.load(data)
-        const conteudo = $('#contenuto .inner')
-        conteudo.find('h1').each((_, el) => {
-            const texto = $(el).html() || ''
-            $(el).replaceWith(`<h3>${texto}</h3>`)
-        })
-        const titulo = conteudo.find('h3').first().text().trim()
-        const htmlCompleto = conteudo.html() || ''
-        const textoCompleto = this.limparHtml(htmlCompleto)
-
-        const idxTercia = textoCompleto.search(/Tércia/i)
-        const idxSexta = textoCompleto.search(/Sexta/i)
-        const idxNoa = textoCompleto.search(/Noa/i)
-
-        const trechoTercia = textoCompleto.slice(idxTercia, idxSexta).trim()
-        const trechoSexta = textoCompleto.slice(idxSexta, idxNoa).trim()
-        const trechoNoa = textoCompleto.slice(idxNoa).trim()
-
-        return {
-            titulo,
-            hora: 'Hora Intermédia',
-            partes: {
-                tercia: {
-                    html: htmlCompleto,
-                    texto: this.identarTexto(trechoTercia)
-                },
-                sexta: {
-                    html: htmlCompleto,
-                    texto: this.identarTexto(trechoSexta)
-                },
-                noa: {
-                    html: htmlCompleto,
-                    texto: this.identarTexto(trechoNoa)
-                }
-            }
-        }
     }
 }

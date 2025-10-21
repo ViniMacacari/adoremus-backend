@@ -33,13 +33,13 @@ export class LiturgiaImporter {
         `
 
         const params = [
-            horas.ufficio_delle_letture.texto,
-            horas.lodi.texto,
-            horaMedia.partes.tercia.texto,
-            horaMedia.partes.sexta.texto,
-            horaMedia.partes.noa.texto,
-            horas.vespri.texto,
-            horas.compieta.texto,
+            horas.ufficio_delle_letture.html,
+            horas.lodi.html,
+            horaMedia.partes.tercia.html,
+            horaMedia.partes.sexta.html,
+            horaMedia.partes.noa.html,
+            horas.vespri.html,
+            horas.compieta.html,
             idioma,
             ciclo_liturgico,
             data.dia,
