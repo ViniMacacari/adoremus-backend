@@ -129,20 +129,27 @@ export class IBreviaryService {
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
         const conteudo = $('#contenuto .inner')
-
         const allChildren = conteudo.children().toArray()
 
         const nomesHoras = {
             pt: { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i },
-            la: { tercia: /Ad\s*Tertiam/i, sexta: /Ad\s*Sextam/i, noa: /Ad\s*Nonam/i },
+            la: { tercia: /\bAd\s*Terti(am|a)\b/i, sexta: /\bAd\s*Sext(am|a)\b/i, noa: /\bAd\s*Non(am|a)\b/i },
             it: { tercia: /Terza/i, sexta: /Sesta/i, noa: /Nona/i },
             en: { tercia: /Terce|Midmorning/i, sexta: /Sext|Midday/i, noa: /None|Afternoon/i },
             es: { tercia: /Tercia/i, sexta: /Sexta/i, noa: /Nona/i }
         }[this.idioma] || { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i }
 
-        const idxTercia = allChildren.findIndex(el => $(el).text().match(nomesHoras.tercia))
-        const idxSexta = allChildren.findIndex(el => $(el).text().match(nomesHoras.sexta))
-        const idxNoa = allChildren.findIndex(el => $(el).text().match(nomesHoras.noa))
+        const findLastIndex = (regex: RegExp) => {
+            let lastIndex = -1
+            allChildren.forEach((el, i) => {
+                if ($(el).text().match(regex)) lastIndex = i
+            })
+            return lastIndex
+        }
+
+        const idxTercia = findLastIndex(nomesHoras.tercia)
+        const idxSexta = findLastIndex(nomesHoras.sexta)
+        const idxNoa = findLastIndex(nomesHoras.noa)
 
         if (idxTercia === -1 || idxSexta === -1 || idxNoa === -1)
             throw new Error(`Não foi possível encontrar as seções de hora média (${this.idioma}).`)
@@ -153,18 +160,14 @@ export class IBreviaryService {
             return this.limparHtml(sectionHtml)
         }
 
-        const tercia = getSectionHtml(0, idxSexta)
+        const tercia = getSectionHtml(idxTercia, idxSexta)
         const sexta = getSectionHtml(idxSexta, idxNoa)
         const noa = getSectionHtml(idxNoa)
 
         return {
             titulo: 'Hora Média',
             hora: 'Hora Intermédia',
-            partes: {
-                tercia,
-                sexta,
-                noa
-            }
+            partes: { tercia, sexta, noa }
         }
     }
 
