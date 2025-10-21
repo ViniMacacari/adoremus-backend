@@ -266,12 +266,15 @@ export class IBreviaryService {
 
     private buildLatinMediumHour($: cheerio.CheerioAPI, content: cheerio.Cheerio<any>): MediumHourResult {
         const nodes = content.children().toArray()
-        const textAt = (i: number) => $(nodes[i]).text().trim()
+        const textAt = (i: number) => $(nodes[i]).text().replace(/\s+/g, ' ').trim()
         const tagAt = (i: number) => (nodes[i] as any)?.tagName || ''
         const htmlSlice = (a: number, b?: number) => nodes.slice(a, b).map(el => $.html(el)).join('')
 
         const findText = (re: RegExp, start = 0) => {
-            for (let i = start; i < nodes.length; i++) if (re.test(textAt(i))) return i
+            for (let i = start; i < nodes.length; i++) {
+                const fullText = $(nodes[i]).text().replace(/\s+/g, ' ').trim()
+                if (re.test(fullText)) return i
+            }
             return -1
         }
 
@@ -292,14 +295,13 @@ export class IBreviaryService {
 
         if (idxHymnus === -1) throw new Error('HYMNUS não encontrado para LATIM')
 
-        const idxT = findText(/\bAD\s+TERTIAM\b/i, idxHymnus)
-        const idxS = findText(/\bAD\s+SEXTAM\b/i, idxT + 1)
-        const idxN = findText(/\bAD\s+NONAM\b/i, idxS + 1)
-        const idxComplementaris = findText(/PSALMODIA\s+COMPLEMENTARIS/i)
+        const idxT = findText(/AD\s*TERTIAM/i, idxHymnus)
+        const idxS = findText(/AD\s*SEXTAM/i, idxT + 1)
+        const idxN = findText(/AD\s*NONAM/i, idxS + 1)
+        const idxComplementaris = findText(/Psalmodia\s+Complementaris/i)
 
-        if (idxT === -1 || idxS === -1 || idxN === -1) {
+        if (idxT === -1 || idxS === -1 || idxN === -1)
             throw new Error('Estrutura de divisões não encontrada (AD TERTIAM/SEXTAM/NONAM)')
-        }
 
         const introHtml = htmlSlice(0, idxT)
         const hymnT = htmlSlice(idxT, idxS)
@@ -307,7 +309,8 @@ export class IBreviaryService {
         const hymnN = htmlSlice(idxN, idxComplementaris !== -1 ? idxComplementaris : undefined)
 
         const idxAfterHymnus = nextHrAfter(idxHymnus)
-        const psalmodiaCommon = htmlSlice(idxAfterHymnus, idxComplementaris !== -1 ? idxComplementaris : nodes.length)
+        const startIdx = idxAfterHymnus !== -1 ? idxAfterHymnus : idxHymnus + 1
+        const psalmodiaCommon = htmlSlice(startIdx, idxComplementaris !== -1 ? idxComplementaris : nodes.length)
 
         const idxSeriesT = findText(/Series\s+I/i, idxComplementaris)
         const idxSeriesS = findText(/Series\s+II/i, idxSeriesT + 1)
@@ -318,9 +321,9 @@ export class IBreviaryService {
         const compS = idxSeriesS !== -1 ? htmlSlice(idxSeriesS, idxSeriesN !== -1 ? idxSeriesN : idxAfterSeries) : ''
         const compN = idxSeriesN !== -1 ? htmlSlice(idxSeriesN, idxAfterSeries) : ''
 
-        const lectio1 = findText(/\bAD\s+TERTIAM\b/i, idxComplementaris)
-        const lectio2 = findText(/\bAD\s+SEXTAM\b/i, lectio1 + 1)
-        const lectio3 = findText(/\bAD\s+NONAM\b/i, lectio2 + 1)
+        const lectio1 = findText(/AD\s*TERTIAM/i, idxComplementaris)
+        const lectio2 = findText(/AD\s*SEXTAM/i, lectio1 + 1)
+        const lectio3 = findText(/AD\s*NONAM/i, lectio2 + 1)
 
         const end1 = nextHrAfter(lectio1)
         const end2 = nextHrAfter(lectio2)
