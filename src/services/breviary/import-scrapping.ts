@@ -31,14 +31,15 @@ export class LiturgyImporter {
         const mediumHour = await this.ibreviary.getSeparatedMediumHour(year, month, day)
 
         const date = this.getBrazilDate(year, month, day)
+        const formattedDate = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
 
         const sql = `
-            INSERT INTO liturgia_das_horas
-                (oficio_leitura, laudes, tercia, sexta, noa, vesperas, completas, lingua, liturgicalCycle, dia, mes)
-            VALUES
-                ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING id
-        `
+        insert into liturgia_das_horas
+            (oficio_leitura, laudes, tercia, sexta, noa, vesperas, completas, lingua, data)
+        values
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        returning id
+    `
 
         const params = [
             hours.ufficio_delle_letture.html,
@@ -49,9 +50,7 @@ export class LiturgyImporter {
             hours.vespri.html,
             hours.compieta.html,
             language?.storeLanguage || 'pt_BR',
-            liturgicalCycle,
-            date.day,
-            date.month
+            formattedDate
         ]
 
         try {
