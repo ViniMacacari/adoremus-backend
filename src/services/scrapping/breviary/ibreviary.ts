@@ -4,80 +4,80 @@ import he from 'he'
 import { CookieJar } from 'tough-cookie'
 import { wrapper } from 'axios-cookiejar-support'
 
-export type Hora =
+export type Hour =
     | 'ufficio_delle_letture'
     | 'lodi'
     | 'ora_media'
     | 'vespri'
     | 'compieta'
 
-export interface ResultadoLiturgia {
-    titulo: string
+export interface LiturgyResult {
+    title: string
     html: string
-    texto: string
+    text: string
 }
 
-export interface ParteHora {
+export interface HourSection {
     html: string
-    texto: string
+    text: string
 }
 
-export interface ResultadoHoraMedia {
-    titulo: string
-    hora: string
-    partes: {
-        tercia: ParteHora
-        sexta: ParteHora
-        noa: ParteHora
+export interface MediumHourResult {
+    title: string
+    hour: string
+    parts: {
+        tercia: HourSection
+        sexta: HourSection
+        noa: HourSection
     }
 }
 
 export class IBreviaryService {
-    private readonly base = 'https://www.ibreviary.com/m2'
-    private idioma: string
+    private readonly baseUrl = 'https://www.ibreviary.com/m2'
+    private language: string
     private readonly jar = new CookieJar()
-    private readonly cliente
+    private readonly client
 
-    constructor(idioma: string = 'pt') {
-        this.idioma = idioma
-        this.cliente = wrapper(axios.create({ jar: this.jar, withCredentials: true }))
+    constructor(language: string = 'pt') {
+        this.language = language
+        this.client = wrapper(axios.create({ jar: this.jar, withCredentials: true }))
     }
 
-    setLanguage(idioma: 'pt' | 'la' | 'it' | 'en' | 'es') {
-        this.idioma = idioma
+    setLanguage(language: 'pt' | 'la' | 'it' | 'en' | 'es') {
+        this.language = language
     }
 
-    private getDataBrasil(): { ano: number; mes: number; dia: number } {
-        const agora = new Date()
-        const brasil = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
+    private getBrazilDate(): { year: number; month: number; day: number } {
+        const now = new Date()
+        const brazil = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
         return {
-            ano: brasil.getFullYear(),
-            mes: brasil.getMonth() + 1,
-            dia: brasil.getDate()
+            year: brazil.getFullYear(),
+            month: brazil.getMonth() + 1,
+            day: brazil.getDate()
         }
     }
 
-    private async definirDiaAtual(ano?: number, mes?: number, dia?: number): Promise<void> {
-        const data = this.getDataBrasil()
-        const anoFinal = ano ?? data.ano
-        const mesFinal = mes ?? data.mes
-        const diaFinal = dia ?? data.dia
+    private async setCurrentDay(year?: number, month?: number, day?: number): Promise<void> {
+        const date = this.getBrazilDate()
+        const finalYear = year ?? date.year
+        const finalMonth = month ?? date.month
+        const finalDay = day ?? date.day
 
         const body = new URLSearchParams({
-            anno: anoFinal.toString(),
-            mese: mesFinal.toString(),
-            giorno: diaFinal.toString(),
-            lang: this.idioma,
+            anno: finalYear.toString(),
+            mese: finalMonth.toString(),
+            giorno: finalDay.toString(),
+            lang: this.language,
             ok: 'ok'
         })
 
-        await this.cliente.post(`${this.base}/opzioni.php`, body, {
+        await this.client.post(`${this.baseUrl}/opzioni.php`, body, {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         })
-        await this.cliente.get(`${this.base}/breviario.php`)
+        await this.client.get(`${this.baseUrl}/breviario.php`)
     }
 
-    private limparHtml(html: string): { html: string; texto: string } {
+    private cleanHtml(html: string): { html: string; text: string } {
         const $ = cheerio.load(html)
 
         $('script, style, noscript, header, footer, nav').remove()
@@ -125,35 +125,35 @@ export class IBreviaryService {
         const cleanHtml = he.decode($.html().trim())
         const cleanText = he.decode($.text().replace(/\s{2,}/g, ' ').trim())
 
-        return { html: cleanHtml, texto: cleanText }
+        return { html: cleanHtml, text: cleanText }
     }
 
-    async obterHora(hora: Hora, ano?: number, mes?: number, dia?: number): Promise<ResultadoLiturgia> {
-        await this.definirDiaAtual(ano, mes, dia)
-        const url = `${this.base}/breviario.php?s=${hora}&lang=${this.idioma}`
-        const { data } = await this.cliente.get(url)
+    async getHour(hour: Hour, year?: number, month?: number, day?: number): Promise<LiturgyResult> {
+        await this.setCurrentDay(year, month, day)
+        const url = `${this.baseUrl}/breviario.php?s=${hour}&lang=${this.language}`
+        const { data } = await this.client.get(url)
         const $ = cheerio.load(data)
-        const conteudo = $('#contenuto .inner')
-        const { html: htmlLimpo, texto: textoLimpo } = this.limparHtml(conteudo.html() || '')
-        const titulo = conteudo.find('h3').first().text().trim() || hora
-        return { titulo, html: htmlLimpo, texto: textoLimpo }
+        const content = $('#contenuto .inner')
+        const { html: cleanedHtml, text: cleanedText } = this.cleanHtml(content.html() || '')
+        const title = content.find('h3').first().text().trim() || hour
+        return { title, html: cleanedHtml, text: cleanedText }
     }
 
-    async obterHoraMediaSeparada(ano?: number, mes?: number, dia?: number): Promise<ResultadoHoraMedia> {
-        await this.definirDiaAtual(ano, mes, dia)
-        const url = `${this.base}/breviario.php?s=ora_media&lang=${this.idioma}`
-        const { data } = await this.cliente.get(url)
+    async getSeparatedMediumHour(year?: number, month?: number, day?: number): Promise<MediumHourResult> {
+        await this.setCurrentDay(year, month, day)
+        const url = `${this.baseUrl}/breviario.php?s=ora_media&lang=${this.language}`
+        const { data } = await this.client.get(url)
         const $ = cheerio.load(data)
-        const conteudo = $('#contenuto .inner')
-        const allChildren = conteudo.children().toArray()
+        const content = $('#contenuto .inner')
+        const allChildren = content.children().toArray()
 
-        const nomesHoras = {
+        const hourNames = {
             pt: { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i },
             la: { tercia: /\bAd\s*Terti(am|a)\b/i, sexta: /\bAd\s*Sext(am|a)\b/i, noa: /\bAd\s*Non(am|a)\b/i },
             it: { tercia: /Terza/i, sexta: /Sesta/i, noa: /Nona/i },
             en: { tercia: /Terce|Midmorning/i, sexta: /Sext|Midday/i, noa: /None|Afternoon/i },
             es: { tercia: /Tercia/i, sexta: /Sexta/i, noa: /Nona/i }
-        }[this.idioma] || { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i }
+        }[this.language] || { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i }
 
         const findLastIndex = (regex: RegExp) => {
             let lastIndex = -1
@@ -163,17 +163,17 @@ export class IBreviaryService {
             return lastIndex
         }
 
-        const idxTercia = findLastIndex(nomesHoras.tercia)
-        const idxSexta = findLastIndex(nomesHoras.sexta)
-        const idxNoa = findLastIndex(nomesHoras.noa)
+        const idxTercia = findLastIndex(hourNames.tercia)
+        const idxSexta = findLastIndex(hourNames.sexta)
+        const idxNoa = findLastIndex(hourNames.noa)
 
         if (idxTercia === -1 || idxSexta === -1 || idxNoa === -1)
-            throw new Error(`Não foi possível encontrar as seções de hora média (${this.idioma}).`)
+            throw new Error(`Could not find the sections for Medium Hour (${this.language}).`)
 
         const getSectionHtml = (start: number, end?: number) => {
             const sectionEls = allChildren.slice(start, end)
             const sectionHtml = sectionEls.map(el => $.html(el)).join('')
-            return this.limparHtml(sectionHtml)
+            return this.cleanHtml(sectionHtml)
         }
 
         const tercia = getSectionHtml(idxTercia, idxSexta)
@@ -181,25 +181,25 @@ export class IBreviaryService {
         const noa = getSectionHtml(idxNoa)
 
         return {
-            titulo: 'Hora Média',
-            hora: 'Hora Intermédia',
-            partes: { tercia, sexta, noa }
+            title: 'Medium Hour',
+            hour: 'Intermediate Hour',
+            parts: { tercia, sexta, noa }
         }
     }
 
-    async obterTodasAsHoras(ano?: number, mes?: number, dia?: number): Promise<Record<Hora, ResultadoLiturgia>> {
-        await this.definirDiaAtual(ano, mes, dia)
-        const horas: Hora[] = [
+    async getAllHours(year?: number, month?: number, day?: number): Promise<Record<Hour, LiturgyResult>> {
+        await this.setCurrentDay(year, month, day)
+        const hours: Hour[] = [
             'ufficio_delle_letture',
             'lodi',
             'ora_media',
             'vespri',
             'compieta'
         ]
-        const resultado: Record<Hora, ResultadoLiturgia> = {} as any
-        for (const hora of horas) {
-            resultado[hora] = await this.obterHora(hora, ano, mes, dia)
+        const result: Record<Hour, LiturgyResult> = {} as any
+        for (const hour of hours) {
+            result[hour] = await this.getHour(hour, year, month, day)
         }
-        return resultado
+        return result
     }
 }
