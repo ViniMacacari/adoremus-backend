@@ -43,7 +43,7 @@ export class IBreviaryService {
         this.cliente = wrapper(axios.create({ jar: this.jar, withCredentials: true }))
     }
 
-    setLanguage(idioma: 'pt' | 'lt' | 'it' | 'en' | 'es') {
+    setLanguage(idioma: 'pt' | 'la' | 'it' | 'en' | 'es') {
         this.idioma = idioma
     }
 
@@ -114,7 +114,7 @@ export class IBreviaryService {
 
     async obterHora(hora: Hora, ano?: number, mes?: number, dia?: number): Promise<ResultadoLiturgia> {
         await this.definirDiaAtual(ano, mes, dia)
-        const url = `${this.base}/breviario.php?s=${hora}`
+        const url = `${this.base}/breviario.php?s=${hora}&lang=${this.idioma}`
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
         const conteudo = $('#contenuto .inner')
@@ -125,17 +125,16 @@ export class IBreviaryService {
 
     async obterHoraMediaSeparada(ano?: number, mes?: number, dia?: number): Promise<ResultadoHoraMedia> {
         await this.definirDiaAtual(ano, mes, dia)
-        const url = `${this.base}/breviario.php?s=ora_media`
+        const url = `${this.base}/breviario.php?s=ora_media&lang=${this.idioma}`
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
         const conteudo = $('#contenuto .inner')
 
         const allChildren = conteudo.children().toArray()
 
-        // 🔹 Dicionário de nomes conforme idioma
         const nomesHoras = {
             pt: { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i },
-            lt: { tercia: /Tertia/i, sexta: /Sexta/i, noa: /Nona/i },
+            la: { tercia: /Ad\s*Tertiam/i, sexta: /Ad\s*Sextam/i, noa: /Ad\s*Nonam/i },
             it: { tercia: /Terza/i, sexta: /Sesta/i, noa: /Nona/i },
             en: { tercia: /Terce|Midmorning/i, sexta: /Sext|Midday/i, noa: /None|Afternoon/i },
             es: { tercia: /Tercia/i, sexta: /Sexta/i, noa: /Nona/i }

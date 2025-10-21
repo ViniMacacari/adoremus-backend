@@ -18,11 +18,11 @@ export class LiturgiaImporter {
         dia?: number
     ): Promise<void> {
         console.log(`⛪ Iniciando importação da Liturgia das Horas...`)
-        this.ibreviary.setLanguage('pt')
+        this.ibreviary.setLanguage('la')
         const horas = await this.ibreviary.obterTodasAsHoras(ano, mes, dia)
         const horaMedia = await this.ibreviary.obterHoraMediaSeparada(ano, mes, dia)
 
-        const idioma = 'pt_BR'
+        const idioma = 'lt'
         const data = this.getDataBrasil(ano, mes, dia)
 
         const sql = `
