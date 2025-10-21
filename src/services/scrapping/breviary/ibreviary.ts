@@ -187,7 +187,11 @@ export class IBreviaryService {
 
         if (['pt', 'es'].includes(this.language)) {
             const idxT = firstIndex(hourNames.tercia)
-            if (idxT === -1) throw new Error(`Não foi possível localizar Tércia (${this.language}).`)
+
+            if (idxT === -1) {
+                console.error(`Não foi possível localizar Tércia (${this.language}).`)
+            }
+
             const idxS = firstIndex(hourNames.sexta, idxT + 1)
             const idxN = idxS === -1 ? -1 : firstIndex(hourNames.noa, idxS + 1)
             const commonIntroHtml = sliceHtml(0, idxT)
