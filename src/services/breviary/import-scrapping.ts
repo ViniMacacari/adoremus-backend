@@ -30,9 +30,6 @@ export class LiturgyImporter {
         const formattedDate =
             `${date.year.toString().padStart(4, '0')}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
 
-        console.log('date>', date)
-        console.log('format', formattedDate)
-
         const hours = await this.ibreviary.getAllHours(year, month, day)
         const mediumHour = await this.ibreviary.getSeparatedMediumHour(year, month, day)
 

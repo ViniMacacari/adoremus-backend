@@ -155,30 +155,44 @@ export class IBreviaryService {
             es: { tercia: /Tercia/i, sexta: /Sexta/i, noa: /Nona/i }
         }[this.language] || { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i }
 
-        const findLastIndex = (regex: RegExp) => {
-            let lastIndex = -1
+        const useLast = ['la', 'it', 'en'].includes(this.language)
+
+        const findHourIndex = (regex: RegExp): number => {
+            let index = -1
             allChildren.forEach((el, i) => {
-                if ($(el).text().match(regex)) lastIndex = i
+                if ($(el).text().match(regex)) {
+                    if (useLast) index = i
+                    else if (index === -1) index = i
+                }
             })
-            return lastIndex
+            return index
         }
 
-        const idxTercia = findLastIndex(hourNames.tercia)
-        const idxSexta = findLastIndex(hourNames.sexta)
-        const idxNoa = findLastIndex(hourNames.noa)
+        const idxTercia = findHourIndex(hourNames.tercia)
+        const idxSexta = findHourIndex(hourNames.sexta)
+        const idxNoa = findHourIndex(hourNames.noa)
 
-        if (idxTercia === -1 || idxSexta === -1 || idxNoa === -1)
-            throw new Error(`Could not find the sections for Medium Hour (${this.language}).`)
+        if (idxTercia === -1)
+            throw new Error(`Não foi possível localizar as seções da Hora Intermédia (${this.language}).`)
+
+        let commonIntroHtml = ''
+        if (['pt', 'es'].includes(this.language)) {
+            const commonIntroEls = allChildren.slice(0, idxTercia)
+            commonIntroHtml = commonIntroEls.map(el => $.html(el)).join('')
+        }
 
         const getSectionHtml = (start: number, end?: number) => {
             const sectionEls = allChildren.slice(start, end)
             const sectionHtml = sectionEls.map(el => $.html(el)).join('')
-            return this.cleanHtml(sectionHtml)
+            const fullHtml = commonIntroHtml ? commonIntroHtml + sectionHtml : sectionHtml
+            return this.cleanHtml(fullHtml)
         }
 
-        const tercia = getSectionHtml(idxTercia, idxSexta)
-        const sexta = getSectionHtml(idxSexta, idxNoa)
-        const noa = getSectionHtml(idxNoa)
+        const tercia = getSectionHtml(idxTercia, idxSexta !== -1 ? idxSexta : undefined)
+        const sexta = idxSexta !== -1
+            ? getSectionHtml(idxSexta, idxNoa !== -1 ? idxNoa : undefined)
+            : { html: '', text: '' }
+        const noa = idxNoa !== -1 ? getSectionHtml(idxNoa) : { html: '', text: '' }
 
         return {
             title: 'Medium Hour',
