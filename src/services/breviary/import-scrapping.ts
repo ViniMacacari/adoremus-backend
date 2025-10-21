@@ -16,6 +16,17 @@ export class LiturgyImporter {
         this.ibreviary = new IBreviaryService('pt')
     }
 
+    async bilingualImportByMonth(month: number, year: number,): Promise<void> {
+        const daysInMonth = this.getDaysInMonth(year, month)
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            console.log(`Importando dia ${day}/${month}/${year}...`)
+            await this.bilingualImport(year, month, day)
+        }
+
+        console.log(`Importação bilíngue completa para ${month}/${year}`)
+    }
+
     async bilingualImport(
         year?: number,
         month?: number,
@@ -89,5 +100,9 @@ export class LiturgyImporter {
             month: brazil.getMonth() + 1,
             day: brazil.getDate()
         }
+    }
+
+    private getDaysInMonth(year: number, month: number): number {
+        return new Date(year, month, 0).getDate()
     }
 }
