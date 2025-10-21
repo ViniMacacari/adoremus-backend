@@ -145,6 +145,11 @@ export class IBreviaryService {
         const { data } = await this.client.get(url)
         const $ = cheerio.load(data)
         const content = $('#contenuto .inner')
+
+        if (this.language === 'la') {
+            return this.buildLatinMediumHour($, content)
+        }
+
         const allChildren = content.children().toArray()
 
         const hourNames = {
@@ -200,7 +205,7 @@ export class IBreviaryService {
 
         if (idxHymnus === -1 || idxPsalmA === -1 || idxLectioA === -1) {
             const iT = firstIndex(hourNames.tercia)
-            if (iT === -1) throw new Error('Não foi possível separar as seções (LA/IT/EN).')
+            if (iT === -1) throw new Error('Não foi possível separar as seções (IT/EN).')
             const iS = firstIndex(hourNames.sexta, iT + 1)
             const iN = iS === -1 ? -1 : firstIndex(hourNames.noa, iS + 1)
             const buildSimple = (a: number, b?: number) => this.cleanHtml(sliceHtml(a, b))
@@ -251,6 +256,87 @@ export class IBreviaryService {
         const noa = build(hourNames.noa)
 
         return { title: 'Medium Hour', hour: 'Intermediate Hour', parts: { tercia, sexta, noa } }
+    }
+
+    private buildLatinMediumHour($: cheerio.CheerioAPI, content: cheerio.Cheerio<any>): MediumHourResult {
+        const nodes = content.children().toArray()
+        const textAt = (i: number) => $(nodes[i]).text().trim()
+        const tagAt = (i: number) => (nodes[i] as any)?.tagName || ''
+        const htmlSlice = (a: number, b?: number) => nodes.slice(a, b).map(el => $.html(el)).join('')
+
+        const findText = (re: RegExp, start = 0) => {
+            for (let i = start; i < nodes.length; i++) if (re.test(textAt(i))) return i
+            return -1
+        }
+
+        const nextHrAfter = (start: number) => {
+            for (let i = start + 1; i < nodes.length; i++) if (/^hr$/i.test(tagAt(i))) return i
+            return -1
+        }
+
+        const idxHymnus = (() => {
+            const direct = findText(/\bHYMNUS\b/i)
+            if (direct !== -1) return direct
+            const span = content.find('span:contains("HYMNUS"), font:contains("HYMNUS"), b:contains("HYMNUS")').first()
+            if (span.length) {
+                for (let i = 0; i < nodes.length; i++) if ($(nodes[i]).find(span).length) return i
+            }
+            return -1
+        })()
+
+        if (idxHymnus === -1) throw new Error('HYMNUS não encontrado para LATIM')
+
+        const idxT = findText(/\bAD\s+TERTIAM\b/i, idxHymnus)
+        const idxS = findText(/\bAD\s+SEXTAM\b/i, idxT + 1)
+        const idxN = findText(/\bAD\s+NONAM\b/i, idxS + 1)
+        const idxComplementaris = findText(/PSALMODIA\s+COMPLEMENTARIS/i)
+
+        if (idxT === -1 || idxS === -1 || idxN === -1) {
+            throw new Error('Estrutura de divisões não encontrada (AD TERTIAM/SEXTAM/NONAM)')
+        }
+
+        const introHtml = htmlSlice(0, idxT)
+        const hymnT = htmlSlice(idxT, idxS)
+        const hymnS = htmlSlice(idxS, idxN)
+        const hymnN = htmlSlice(idxN, idxComplementaris !== -1 ? idxComplementaris : undefined)
+
+        // Psalmodia comum (entre HYMNUS e PSALMODIA COMPLEMENTARIS)
+        const idxAfterHymnus = nextHrAfter(idxHymnus)
+        const psalmodiaCommon = htmlSlice(idxAfterHymnus, idxComplementaris !== -1 ? idxComplementaris : nodes.length)
+
+        // Psalmodias complementares
+        const idxSeriesT = findText(/Series\s+I/i, idxComplementaris)
+        const idxSeriesS = findText(/Series\s+II/i, idxSeriesT + 1)
+        const idxSeriesN = findText(/Series\s+III/i, idxSeriesS + 1)
+        const idxAfterSeries = nextHrAfter(idxSeriesN !== -1 ? idxSeriesN : idxSeriesS !== -1 ? idxSeriesS : idxSeriesT)
+
+        const compT = idxSeriesT !== -1 ? htmlSlice(idxSeriesT, idxSeriesS !== -1 ? idxSeriesS : idxAfterSeries) : ''
+        const compS = idxSeriesS !== -1 ? htmlSlice(idxSeriesS, idxSeriesN !== -1 ? idxSeriesN : idxAfterSeries) : ''
+        const compN = idxSeriesN !== -1 ? htmlSlice(idxSeriesN, idxAfterSeries) : ''
+
+        // LECTIO BREVIS + ORATIO (divididas por <hr>)
+        const lectio1 = findText(/\bAD\s+TERTIAM\b/i, idxComplementaris)
+        const lectio2 = findText(/\bAD\s+SEXTAM\b/i, lectio1 + 1)
+        const lectio3 = findText(/\bAD\s+NONAM\b/i, lectio2 + 1)
+
+        const end1 = nextHrAfter(lectio1)
+        const end2 = nextHrAfter(lectio2)
+        const end3 = nextHrAfter(lectio3)
+
+        const lectioT = lectio1 !== -1 ? htmlSlice(lectio1, end1 !== -1 ? end1 : lectio2) : ''
+        const lectioS = lectio2 !== -1 ? htmlSlice(lectio2, end2 !== -1 ? end2 : lectio3) : ''
+        const lectioN = lectio3 !== -1 ? htmlSlice(lectio3, end3 !== -1 ? end3 : undefined) : ''
+
+        const build = (hymn: string, lectio: string, comp: string) => {
+            const full = introHtml + hymn + psalmodiaCommon + lectio + comp
+            return this.cleanHtml(full)
+        }
+
+        const tercia = build(hymnT, lectioT, compT)
+        const sexta = build(hymnS, lectioS, compS)
+        const noa = build(hymnN, lectioN, compN)
+
+        return { title: 'Hora Media', hour: 'Horae mediae', parts: { tercia, sexta, noa } }
     }
 
     async getAllHours(year?: number, month?: number, day?: number): Promise<Record<Hour, LiturgyResult>> {
