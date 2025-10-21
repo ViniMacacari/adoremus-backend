@@ -93,7 +93,11 @@ export class IBreviaryService {
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
         const conteudo = $('#contenuto .inner')
-        const titulo = conteudo.find('h1').first().text().trim()
+        conteudo.find('h1').each((_, el) => {
+            const texto = $(el).html() || ''
+            $(el).replaceWith(`<h3>${texto}</h3>`)
+        })
+        const titulo = conteudo.find('h3').first().text().trim()
         const html = conteudo.html() || ''
         const texto = this.identarTexto(this.limparHtml(html))
         return { titulo, html, texto }
@@ -121,11 +125,14 @@ export class IBreviaryService {
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
         const conteudo = $('#contenuto .inner')
-        const titulo = conteudo.find('h1').first().text().trim()
+        conteudo.find('h1').each((_, el) => {
+            const texto = $(el).html() || ''
+            $(el).replaceWith(`<h3>${texto}</h3>`)
+        })
+        const titulo = conteudo.find('h3').first().text().trim()
         const htmlCompleto = conteudo.html() || ''
         const textoCompleto = this.limparHtml(htmlCompleto)
 
-        // localizar os pontos de divisão
         const idxTercia = textoCompleto.search(/Tércia/i)
         const idxSexta = textoCompleto.search(/Sexta/i)
         const idxNoa = textoCompleto.search(/Noa/i)
