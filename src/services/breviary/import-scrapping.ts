@@ -18,6 +18,7 @@ export class LiturgiaImporter {
         dia?: number
     ): Promise<void> {
         console.log(`⛪ Iniciando importação da Liturgia das Horas...`)
+        this.ibreviary.setLanguage('pt')
         const horas = await this.ibreviary.obterTodasAsHoras(ano, mes, dia)
         const horaMedia = await this.ibreviary.obterHoraMediaSeparada(ano, mes, dia)
 

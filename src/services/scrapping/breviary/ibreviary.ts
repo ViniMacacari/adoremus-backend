@@ -34,13 +34,17 @@ export interface ResultadoHoraMedia {
 
 export class IBreviaryService {
     private readonly base = 'https://www.ibreviary.com/m2'
-    private readonly idioma: string
+    private idioma: string
     private readonly jar = new CookieJar()
     private readonly cliente
 
     constructor(idioma: string = 'pt') {
         this.idioma = idioma
         this.cliente = wrapper(axios.create({ jar: this.jar, withCredentials: true }))
+    }
+
+    setLanguage(idioma: 'pt' | 'lt' | 'it' | 'en' | 'es') {
+        this.idioma = idioma
     }
 
     private getDataBrasil(): { ano: number; mes: number; dia: number } {
@@ -127,12 +131,22 @@ export class IBreviaryService {
         const conteudo = $('#contenuto .inner')
 
         const allChildren = conteudo.children().toArray()
-        const idxTercia = allChildren.findIndex(el => $(el).text().match(/T[ée]rcia/i))
-        const idxSexta = allChildren.findIndex(el => $(el).text().match(/Sexta/i))
-        const idxNoa = allChildren.findIndex(el => $(el).text().match(/Noa/i))
+
+        // 🔹 Dicionário de nomes conforme idioma
+        const nomesHoras = {
+            pt: { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i },
+            lt: { tercia: /Tertia/i, sexta: /Sexta/i, noa: /Nona/i },
+            it: { tercia: /Terza/i, sexta: /Sesta/i, noa: /Nona/i },
+            en: { tercia: /Terce|Midmorning/i, sexta: /Sext|Midday/i, noa: /None|Afternoon/i },
+            es: { tercia: /Tercia/i, sexta: /Sexta/i, noa: /Nona/i }
+        }[this.idioma] || { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i }
+
+        const idxTercia = allChildren.findIndex(el => $(el).text().match(nomesHoras.tercia))
+        const idxSexta = allChildren.findIndex(el => $(el).text().match(nomesHoras.sexta))
+        const idxNoa = allChildren.findIndex(el => $(el).text().match(nomesHoras.noa))
 
         if (idxTercia === -1 || idxSexta === -1 || idxNoa === -1)
-            throw new Error('Não foi possível encontrar Tércia, Sexta e Noa no HTML.')
+            throw new Error(`Não foi possível encontrar as seções de hora média (${this.idioma}).`)
 
         const getSectionHtml = (start: number, end?: number) => {
             const sectionEls = allChildren.slice(start, end)
