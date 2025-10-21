@@ -53,11 +53,7 @@ export class IBreviaryService {
         }
     }
 
-    private async definirDiaAtual(
-        ano?: number,
-        mes?: number,
-        dia?: number
-    ): Promise<void> {
+    private async definirDiaAtual(ano?: number, mes?: number, dia?: number): Promise<void> {
         const data = this.getDataBrasil()
         const anoFinal = ano ?? data.ano
         const mesFinal = mes ?? data.mes
@@ -77,32 +73,37 @@ export class IBreviaryService {
         await this.cliente.get(`${this.base}/breviario.php`)
     }
 
-    // HTML puro, apenas limpo (sem alterar estrutura)
     private limparHtml(html: string): { html: string; texto: string } {
         const $ = cheerio.load(html)
 
-        // Remove scripts, estilos e blocos desnecessários
         $('script, style, noscript, header, footer, nav').remove()
         $('a[href*="donazione"], a[href*="newsletter"], a[href*="ibreviary.com"]').remove()
 
-        // Remove cabeçalhos redundantes (Breviário, Laudes etc.)
-        $('h1, h2, h3').each((_, el) => {
-            const t = $(el).text().trim()
-            if (/breviário|breviario|laudes|ofício|compieta|vesperas|tércia|sexta|noa/i.test(t))
-                $(el).remove()
+        $('h1').each((_, el) => {
+            const node = $(el)
+            const newEl = $('<h3>').html(node.html() || node.text())
+            node.replaceWith(newEl)
         })
 
-        // Remove spans/font inúteis, preservando o texto e estrutura
+        $('a, p').each((_, el) => {
+            const text = $(el).text().trim()
+            if (/menu/i.test(text)) $(el).remove()
+        })
+
         $('span, font').each((_, el) => {
             const node = $(el)
             node.replaceWith(node.html() || node.text())
         })
 
-        // Decodifica entidades HTML, mantendo estrutura
-        const cleanHtml = he.decode($.html().trim())
+        let content = $('body').html() || ''
+        content = content.replace(/&nbsp;/g, ' ')
+        content = content
+            .replace(/(^|[\s>])V\.\s?/g, '$1℣. ')
+            .replace(/(^|[\s>])R\.\s?/g, '$1℟. ')
+        $('body').html(content)
 
-        // Cria versão texto simples (para salvar no banco, se precisar)
-        const cleanText = he.decode($.text().trim())
+        const cleanHtml = he.decode($.html().trim())
+        const cleanText = he.decode($.text().replace(/\s{2,}/g, ' ').trim())
 
         return { html: cleanHtml, texto: cleanText }
     }
@@ -124,23 +125,32 @@ export class IBreviaryService {
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
         const conteudo = $('#contenuto .inner')
-        const { html: htmlLimpo, texto: textoCompleto } = this.limparHtml(conteudo.html() || '')
 
-        const idxTercia = textoCompleto.search(/Tércia/i)
-        const idxSexta = textoCompleto.search(/Sexta/i)
-        const idxNoa = textoCompleto.search(/Noa/i)
+        const allChildren = conteudo.children().toArray()
+        const idxTercia = allChildren.findIndex(el => $(el).text().match(/T[ée]rcia/i))
+        const idxSexta = allChildren.findIndex(el => $(el).text().match(/Sexta/i))
+        const idxNoa = allChildren.findIndex(el => $(el).text().match(/Noa/i))
 
-        const trechoTercia = textoCompleto.slice(idxTercia, idxSexta).trim()
-        const trechoSexta = textoCompleto.slice(idxSexta, idxNoa).trim()
-        const trechoNoa = textoCompleto.slice(idxNoa).trim()
+        if (idxTercia === -1 || idxSexta === -1 || idxNoa === -1)
+            throw new Error('Não foi possível encontrar Tércia, Sexta e Noa no HTML.')
+
+        const getSectionHtml = (start: number, end?: number) => {
+            const sectionEls = allChildren.slice(start, end)
+            const sectionHtml = sectionEls.map(el => $.html(el)).join('')
+            return this.limparHtml(sectionHtml)
+        }
+
+        const tercia = getSectionHtml(0, idxSexta)
+        const sexta = getSectionHtml(idxSexta, idxNoa)
+        const noa = getSectionHtml(idxNoa)
 
         return {
             titulo: 'Hora Média',
             hora: 'Hora Intermédia',
             partes: {
-                tercia: { html: htmlLimpo, texto: trechoTercia },
-                sexta: { html: htmlLimpo, texto: trechoSexta },
-                noa: { html: htmlLimpo, texto: trechoNoa }
+                tercia,
+                sexta,
+                noa
             }
         }
     }
