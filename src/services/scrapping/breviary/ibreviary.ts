@@ -53,12 +53,21 @@ export class IBreviaryService {
         }
     }
 
-    private async definirDiaAtual(): Promise<void> {
-        const { ano, mes, dia } = this.getDataBrasil()
+    // agora aceita data opcional
+    private async definirDiaAtual(
+        ano?: number,
+        mes?: number,
+        dia?: number
+    ): Promise<void> {
+        const data = this.getDataBrasil()
+        const anoFinal = ano ?? data.ano
+        const mesFinal = mes ?? data.mes
+        const diaFinal = dia ?? data.dia
+
         const body = new URLSearchParams({
-            anno: ano.toString(),
-            mese: mes.toString(),
-            giorno: dia.toString(),
+            anno: anoFinal.toString(),
+            mese: mesFinal.toString(),
+            giorno: diaFinal.toString(),
             lang: this.idioma,
             ok: 'ok'
         })
@@ -95,8 +104,8 @@ export class IBreviaryService {
             .join('\n')
     }
 
-    async obterHora(hora: Hora): Promise<ResultadoLiturgia> {
-        await this.definirDiaAtual()
+    async obterHora(hora: Hora, ano?: number, mes?: number, dia?: number): Promise<ResultadoLiturgia> {
+        await this.definirDiaAtual(ano, mes, dia)
         const url = `${this.base}/breviario.php?s=${hora}`
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
@@ -111,8 +120,8 @@ export class IBreviaryService {
         return { titulo, html, texto }
     }
 
-    async obterTodasAsHoras(): Promise<Record<Hora, ResultadoLiturgia>> {
-        await this.definirDiaAtual()
+    async obterTodasAsHoras(ano?: number, mes?: number, dia?: number): Promise<Record<Hora, ResultadoLiturgia>> {
+        await this.definirDiaAtual(ano, mes, dia)
         const horas: Hora[] = [
             'ufficio_delle_letture',
             'lodi',
@@ -122,13 +131,13 @@ export class IBreviaryService {
         ]
         const resultado: Record<Hora, ResultadoLiturgia> = {} as any
         for (const hora of horas) {
-            resultado[hora] = await this.obterHora(hora)
+            resultado[hora] = await this.obterHora(hora, ano, mes, dia)
         }
         return resultado
     }
 
-    async obterHoraMediaSeparada(): Promise<ResultadoHoraMedia> {
-        await this.definirDiaAtual()
+    async obterHoraMediaSeparada(ano?: number, mes?: number, dia?: number): Promise<ResultadoHoraMedia> {
+        await this.definirDiaAtual(ano, mes, dia)
         const url = `${this.base}/breviario.php?s=ora_media`
         const { data } = await this.cliente.get(url)
         const $ = cheerio.load(data)
