@@ -26,19 +26,23 @@ export class LiturgyImporter {
             this.ibreviary.setLanguage(language.importLanguage)
         }
 
+        const date = this.getBrazilDate(year, month, day)
+        const formattedDate =
+            `${date.year.toString().padStart(4, '0')}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+
+        console.log('date>', date)
+        console.log('format', formattedDate)
+
         const hours = await this.ibreviary.getAllHours(year, month, day)
         const mediumHour = await this.ibreviary.getSeparatedMediumHour(year, month, day)
 
-        const date = this.getBrazilDate(year, month, day)
-        const formattedDate = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
-
         const sql = `
-        insert into liturgia_das_horas
-            (oficio_leitura, laudes, tercia, sexta, noa, vesperas, completas, lingua, data)
-        values
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        returning id
-    `
+            insert into liturgia_das_horas
+                (oficio_leitura, laudes, tercia, sexta, noa, vesperas, completas, lingua, data)
+            values
+                ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            returning id
+        `
 
         const params = [
             hours.ufficio_delle_letture.html,
@@ -64,7 +68,14 @@ export class LiturgyImporter {
         month?: number,
         day?: number
     ): { year: number; month: number; day: number } {
-        if (year && month && day) return { year, month, day }
+        if (year && month && day) {
+            return {
+                year,
+                month,
+                day
+            }
+        }
+
         const now = new Date()
         const brazil = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
         return {
