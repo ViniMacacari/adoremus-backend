@@ -16,6 +16,15 @@ export class LiturgyImporter {
         this.ibreviary = new IBreviaryService('pt')
     }
 
+    async bilingualImport(
+        year?: number,
+        month?: number,
+        day?: number,
+    ): Promise<void> {
+        await this.import(year, month, day, { importLanguage: 'pt', storeLanguage: 'pt_BR' })
+        return this.import(year, month, day, { importLanguage: 'la', storeLanguage: 'lt' })
+    }
+
     async import(
         year?: number,
         month?: number,
