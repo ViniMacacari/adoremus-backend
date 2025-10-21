@@ -156,25 +156,29 @@ export class IBreviaryService {
         }[this.language] || { tercia: /T[ée]rcia/i, sexta: /Sexta/i, noa: /Noa/i }
 
         const textAt = (i: number) => $(allChildren[i]).text()
+        const tagAt = (i: number) => (allChildren[i] as any).tagName || ''
+        const sliceHtml = (from: number, to?: number) => allChildren.slice(from, to).map(el => $.html(el)).join('')
 
         const firstIndex = (re: RegExp, start = 0) => {
-            for (let i = start; i < allChildren.length; i++) {
-                if (re.test(textAt(i))) return i
-            }
+            for (let i = start; i < allChildren.length; i++) if (re.test(textAt(i))) return i
             return -1
         }
-        const nextIndexAfter = (start: number, re: RegExp) => firstIndex(re, Math.max(0, start + 1))
-        const sliceHtml = (from: number, to?: number) => {
-            const els = allChildren.slice(from, to)
-            return els.map(el => $.html(el)).join('')
+        const indexOfElem = (sel: string) => {
+            const el = content.find(sel).get(0)
+            if (!el) return -1
+            for (let i = 0; i < allChildren.length; i++) if (allChildren[i] === el) return i
+            return -1
+        }
+        const nextHrAfter = (start: number) => {
+            for (let i = start + 1; i < allChildren.length; i++) if (/^hr$/i.test(tagAt(i))) return i
+            return -1
         }
 
         if (['pt', 'es'].includes(this.language)) {
             const idxT = firstIndex(hourNames.tercia)
             if (idxT === -1) throw new Error(`Não foi possível localizar Tércia (${this.language}).`)
-            const idxS = nextIndexAfter(idxT, hourNames.sexta)
-            const idxN = idxS === -1 ? -1 : nextIndexAfter(idxS, hourNames.noa)
-
+            const idxS = firstIndex(hourNames.sexta, idxT + 1)
+            const idxN = idxS === -1 ? -1 : firstIndex(hourNames.noa, idxS + 1)
             const commonIntroHtml = sliceHtml(0, idxT)
 
             const build = (start: number, end?: number) => {
@@ -186,46 +190,19 @@ export class IBreviaryService {
             const tercia = build(idxT, idxS !== -1 ? idxS : undefined)
             const sexta = build(idxS, idxN !== -1 ? idxN : undefined)
             const noa = build(idxN !== -1 ? idxN : -1, undefined)
-
             return { title: 'Medium Hour', hour: 'Intermediate Hour', parts: { tercia, sexta, noa } }
         }
 
-        const reHymnus = /\bHYMNUS\b/i
-        const rePsalmodyTitle = /^\s*PSALMODIA\s*$/i
-        const rePsalmodyComplementaris = /PSALMODIA\s+COMPLEMENTARIS/i
-        const rePsalmodiaLink = /\bPsalmodia\b/i
-        const reLectio = /\bLECTIO\s+BREVIS\b/i
-        const reHrTag = /^hr$/i
+        const idxHymnus = firstIndex(/\bHYMNUS\b/i)
+        const idxPsalmA = indexOfElem('a[name="psalm"]')
+        const idxLectioA = indexOfElem('a[name="lectio"]')
+        const idxCompA = indexOfElem('a[name="comp"]')
 
-        const idxHymnus = firstIndex(reHymnus)
-        let idxInvoc = firstIndex(/Deus,\s*in\s+adiut[óo]rium/i)
-        if (idxInvoc === -1) {
-            idxInvoc = firstIndex(/Horam\s+mediam/i)
-            if (idxInvoc === -1) idxInvoc = 0
-        }
-
-        const idxPsalmodyStart = firstIndex(rePsalmodyTitle)
-        const idxPsalmodyEnd = (() => {
-            if (idxPsalmodyStart === -1) return -1
-            for (let i = idxPsalmodyStart + 1; i < allChildren.length; i++) {
-                const tag = (allChildren[i] as any).tagName || ''
-                const txt = textAt(i)
-                if (reHrTag.test(tag)) return i
-                if (reLectio.test(txt)) return i
-            }
-            return -1
-        })()
-
-        if (idxHymnus === -1 || idxPsalmodyStart === -1 || idxPsalmodyEnd === -1) {
-            const lastIndex = (re: RegExp) => {
-                let idx = -1; for (let i = 0; i < allChildren.length; i++) if (re.test(textAt(i))) idx = i
-                return idx
-            }
-            const iT = lastIndex(hourNames.tercia)
-            const iS = lastIndex(hourNames.sexta)
-            const iN = lastIndex(hourNames.noa)
-            if (iT === -1) throw new Error('Não foi possível separar as seções (fallback LA/IT/EN).')
-
+        if (idxHymnus === -1 || idxPsalmA === -1 || idxLectioA === -1) {
+            const iT = firstIndex(hourNames.tercia)
+            if (iT === -1) throw new Error('Não foi possível separar as seções (LA/IT/EN).')
+            const iS = firstIndex(hourNames.sexta, iT + 1)
+            const iN = iS === -1 ? -1 : firstIndex(hourNames.noa, iS + 1)
             const buildSimple = (a: number, b?: number) => this.cleanHtml(sliceHtml(a, b))
             const tercia = buildSimple(iT, iS !== -1 ? iS : undefined)
             const sexta = iS !== -1 ? buildSimple(iS, iN !== -1 ? iN : undefined) : { html: '', text: '' }
@@ -233,47 +210,45 @@ export class IBreviaryService {
             return { title: 'Medium Hour', hour: 'Intermediate Hour', parts: { tercia, sexta, noa } }
         }
 
-        const commonIntroHtml = sliceHtml(idxInvoc, idxHymnus)
-
-        const stopAtComp = (start: number, end: number) => {
-            const idxComp = firstIndex(rePsalmodyComplementaris, start)
-            return (idxComp !== -1 && idxComp < end) ? idxComp : end
-        }
-        const psalmodyHtml = sliceHtml(idxPsalmodyStart, stopAtComp(idxPsalmodyStart, idxPsalmodyEnd))
+        const commonIntroHtml = sliceHtml(0, idxHymnus)
 
         const hymnFor = (hourRe: RegExp) => {
             const start = firstIndex(hourRe, idxHymnus)
-            if (start === -1) return ''
-            const end = firstIndex(rePsalmodiaLink, start)
-            return sliceHtml(start, (end !== -1 ? end : idxPsalmodyStart))
+            if (start === -1 || start >= idxPsalmA) return ''
+            let end = idxPsalmA
+            for (let i = start + 1; i < idxPsalmA; i++) {
+                if (/Psalmodia/i.test(textAt(i))) { end = i; break }
+            }
+            return sliceHtml(start, end)
         }
+
+        const psalmodyEndCandidates = [idxCompA, idxLectioA, nextHrAfter(idxPsalmA)].filter(i => i !== -1)
+        const idxPsalmodyEnd = psalmodyEndCandidates.length ? Math.min(...psalmodyEndCandidates) : allChildren.length
+        const psalmodyHtml = sliceHtml(idxPsalmA, idxPsalmodyEnd)
 
         const lectioFor = (hourRe: RegExp) => {
-            const start = firstIndex(hourRe, idxPsalmodyEnd)
+            const start = firstIndex(hourRe, idxLectioA)
             if (start === -1) return ''
-            let end = -1
-            for (let i = start + 1; i < allChildren.length; i++) {
-                const tag = (allChildren[i] as any).tagName || ''
-                const txt = textAt(i)
-                if (reHrTag.test(tag)) { end = i; break }
-                if (hourRe.source !== hourNames.tercia.source && hourNames.tercia.test(txt)) { end = i; break }
-                if (hourRe.source !== hourNames.sexta.source && hourNames.sexta.test(txt)) { end = i; break }
-                if (hourRe.source !== hourNames.noa.source && hourNames.noa.test(txt)) { end = i; break }
-                if (rePsalmodyComplementaris.test(txt)) { end = i; break }
+            let end = nextHrAfter(start)
+            for (let i = start + 1; i < (end === -1 ? allChildren.length : end); i++) {
+                const t = textAt(i)
+                if (hourRe.source !== hourNames.tercia.source && hourNames.tercia.test(t)) { end = i; break }
+                if (hourRe.source !== hourNames.sexta.source && hourNames.sexta.test(t)) { end = i; break }
+                if (hourRe.source !== hourNames.noa.source && hourNames.noa.test(t)) { end = i; break }
             }
-            return sliceHtml(start, end !== -1 ? end : undefined)
+            return sliceHtml(start, end === -1 ? undefined : end)
         }
 
-        const buildLa = (hourRe: RegExp) => {
+        const build = (hourRe: RegExp) => {
             const hymn = hymnFor(hourRe)
             const lectio = lectioFor(hourRe)
             const full = commonIntroHtml + hymn + psalmodyHtml + lectio
             return this.cleanHtml(full)
         }
 
-        const tercia = buildLa(hourNames.tercia)
-        const sexta = buildLa(hourNames.sexta)
-        const noa = buildLa(hourNames.noa)
+        const tercia = build(hourNames.tercia)
+        const sexta = build(hourNames.sexta)
+        const noa = build(hourNames.noa)
 
         return { title: 'Medium Hour', hour: 'Intermediate Hour', parts: { tercia, sexta, noa } }
     }
