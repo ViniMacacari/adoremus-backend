@@ -17,7 +17,6 @@ export class LiturgyImporter {
     }
 
     async import(
-        liturgicalCycle: number = 3,
         year?: number,
         month?: number,
         day?: number,
