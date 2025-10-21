@@ -5,11 +5,17 @@ export class GetBreviaryService {
 
     async get(day: number, month: number, year: number, lang: string = 'pt_BR'): Promise<any> {
         try {
-            const cycleId = await this.db.exec('select id from ciclos_liturgicos cl where ciclo_liturgico_do_ano($1) = cl.ciclo', [year])
+            const date = new Date(year, month - 1, day)
+            const dateString = date.toISOString().split('T')[0]
 
-            const sql = 'select * from liturgia_das_horas where dia = $1 and mes = $2 and ciclo_liturgico = $3 and lingua = $4'
+            const sql = `
+                select *
+                from liturgia_das_horas
+                where data = $1
+                  and lingua = $2
+            `
 
-            const result = await this.db.exec(sql, [day, month, cycleId[0].id, lang])
+            const result = await this.db.exec(sql, [dateString, lang])
 
             return result
         } catch (error: any) {
