@@ -99,11 +99,27 @@ export class IBreviaryService {
             node.replaceWith(node.html() || node.text())
         })
 
+        $('a').remove()
+
+        $('p').each((_, el) => {
+            const text = $(el).text().trim()
+            if (
+                /support the continued development of the iBreviary/i.test(text) ||
+                /iBreviary newsletter/i.test(text)
+            ) {
+                $(el).remove()
+            }
+        })
+
         let content = $('body').html() || ''
         content = content.replace(/&nbsp;/g, ' ')
         content = content
             .replace(/(^|[\s>])V\.\s?/g, '$1℣. ')
             .replace(/(^|[\s>])R\.\s?/g, '$1℟. ')
+            .replace(/(<br\s*\/?>\s*){3,}/g, '<br><br>')
+            .replace(/\n{2,}/g, '\n')
+            .replace(/to support the continued development of the iBreviary/gi, '')
+            .replace(/iBreviary newsletter/gi, '')
         $('body').html(content)
 
         const cleanHtml = he.decode($.html().trim())
