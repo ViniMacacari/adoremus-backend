@@ -116,11 +116,17 @@ export class IBreviaryService {
         content = content
             .replace(/(^|[\s>])V\.\s?/g, '$1℣. ')
             .replace(/(^|[\s>])R\.\s?/g, '$1℟. ')
-            .replace(/(<br\s*\/?>\s*){3,}/g, '<br><br>')
+            .replace(/(<br\s*\/?>\s*){3,}/g, '<br>')
             .replace(/\n{2,}/g, '\n')
             .replace(/to support the continued development of the iBreviary/gi, '')
             .replace(/iBreviary newsletter/gi, '')
         $('body').html(content)
+
+        if (this.language.startsWith('pt')) {
+            $('p').each((_, el) => {
+                $(el).after('<br>')
+            })
+        }
 
         const cleanHtml = he.decode($.html().trim())
         const cleanText = he.decode($.text().replace(/\s{2,}/g, ' ').trim())
@@ -300,11 +306,9 @@ export class IBreviaryService {
         const hymnS = htmlSlice(idxS, idxN)
         const hymnN = htmlSlice(idxN, idxComplementaris !== -1 ? idxComplementaris : undefined)
 
-        // Psalmodia comum (entre HYMNUS e PSALMODIA COMPLEMENTARIS)
         const idxAfterHymnus = nextHrAfter(idxHymnus)
         const psalmodiaCommon = htmlSlice(idxAfterHymnus, idxComplementaris !== -1 ? idxComplementaris : nodes.length)
 
-        // Psalmodias complementares
         const idxSeriesT = findText(/Series\s+I/i, idxComplementaris)
         const idxSeriesS = findText(/Series\s+II/i, idxSeriesT + 1)
         const idxSeriesN = findText(/Series\s+III/i, idxSeriesS + 1)
@@ -314,7 +318,6 @@ export class IBreviaryService {
         const compS = idxSeriesS !== -1 ? htmlSlice(idxSeriesS, idxSeriesN !== -1 ? idxSeriesN : idxAfterSeries) : ''
         const compN = idxSeriesN !== -1 ? htmlSlice(idxSeriesN, idxAfterSeries) : ''
 
-        // LECTIO BREVIS + ORATIO (divididas por <hr>)
         const lectio1 = findText(/\bAD\s+TERTIAM\b/i, idxComplementaris)
         const lectio2 = findText(/\bAD\s+SEXTAM\b/i, lectio1 + 1)
         const lectio3 = findText(/\bAD\s+NONAM\b/i, lectio2 + 1)
